@@ -63,7 +63,16 @@ Route::get('/', function (Request $request) {
             'logo' => admin_setting('logo'),
             'theme_config' => $themeService->getConfig($theme)
         ];
-        return view('theme::' . $theme . '.dashboard', $renderParams);
+        // 星屿StarLink 定制：访客看落地页，已登录用户进原 SPA。
+        // 登录态判定用 sl_logged_in cookie（主题层 JS 在登录/退出时同步维护，
+        // 见 theme/Xboard/dashboard.blade.php）；SPA 仍用 localStorage token 做接口鉴权，
+        // cookie 只决定首屏渲染哪个视图，即使失效也不影响鉴权。
+        // 落地页自身也带兜底：localStorage 里有 token 或 hash 是登录/注册路由时，
+        // 会在页内直接启动 SPA。
+        if ($request->cookie('sl_logged_in')) {
+            return view('theme::' . $theme . '.dashboard', $renderParams);
+        }
+        return view('theme::' . $theme . '.landing', $renderParams);
     } catch (Exception $e) {
         Log::error('Theme rendering failed', [
             'theme' => $theme,
