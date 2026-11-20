@@ -372,6 +372,14 @@ class Server extends Model
 
     public function generateServerPassword(User $user): string
     {
+        // Fixed credential for an upstream/resold node (e.g. Mojie): when the
+        // server defines protocol_settings.fixed_uuid, subscription links use
+        // that UUID instead of the customer's own UUID. Servers without it
+        // behave exactly as before.
+        if ($fixedUuid = data_get($this, 'protocol_settings.fixed_uuid')) {
+            return $fixedUuid;
+        }
+
         if ($this->type !== self::TYPE_SHADOWSOCKS) {
             return $user->uuid;
         }
