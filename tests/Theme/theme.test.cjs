@@ -34,6 +34,30 @@ test('shared CSS and client scripts parse', () => {
   }
 });
 
+test('landing base rules do not out-rank component spacing', () => {
+  // A bare #sl-landing selector beats every .sl-* rule, so a reset or base rule there wipes buttons, cards and headings.
+  const style = read('landing').match(/<style>([\s\S]*?)<\/style>/)[1];
+  const offenders = [];
+  css.walk(css.parse(style), {
+    visit: 'Rule',
+    enter(rule) {
+      const sets = rule.block.children.some(d => d.type === 'Declaration' && /^(margin|padding)/.test(d.property));
+      if (!sets) return;
+      for (const selector of rule.prelude.children) {
+        let unwrapped = false;
+        css.walk(selector, {
+          enter(node) {
+            if (node.type === 'PseudoClassSelector' && node.name === 'where') return css.walk.skip;
+            if (node.type === 'IdSelector') unwrapped = true;
+          }
+        });
+        if (unwrapped) offenders.push(css.generate(selector));
+      }
+    }
+  });
+  assert.deepEqual(offenders, []);
+});
+
 test('guest plan table uses real prices including zero and non-monthly periods', async () => {
   const dom = await guest([
     { id: 3, name: '月度', transfer_enable: 50, month_price: 1888, content: '<b>住宅 IP</b>', speed_limit: null, device_limit: 3 },

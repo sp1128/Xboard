@@ -9,15 +9,16 @@
   <style>
     /* 访客落地页。布局参考聚盟云：深色底、左文右图首屏、套餐表、2×2 卖点、发光 CTA。 */
     body.sl-landing-page{--bg:#1b1f2a;--bg-raise:#21263a;--card:#232837;--card-hi:#2a3044;--line:rgba(255,255,255,.08);--line-hi:rgba(255,255,255,.16);--text:rgba(255,255,255,.92);--muted:#8d95a8;--faint:#5f6779;--primary:#165dff;--primary-hi:#4080ff;--glow-a:rgba(22,93,255,.22);--glow-b:rgba(168,72,255,.16);--ok:#23c343}
-    #sl-landing,#sl-landing *{box-sizing:border-box;margin:0;padding:0}
+    /* :where() 让清零规则优先级为 0，否则 #id 会盖过下面所有 .sl-* 的间距 */
+    :where(#sl-landing,#sl-landing *){box-sizing:border-box;margin:0;padding:0}
     body.sl-landing-page{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
     body.sl-landing-page>div[style*="text-align:center"]{display:none!important}/* custom_html 自带页脚与本页 footer 重复 */
     #sl-landing{overflow-x:clip}
     #sl-landing a{color:inherit;text-decoration:none}
     .sl-flag{display:inline-block;width:18px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
     #sl-landing a:focus-visible,#sl-landing button:focus-visible{outline:2px solid var(--primary-hi);outline-offset:3px;border-radius:6px}
-    #sl-landing .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
-    #sl-landing section{padding:96px 0;scroll-margin-top:56px}
+    :where(#sl-landing) .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+    :where(#sl-landing) section{padding:96px 0;scroll-margin-top:56px}
 
     /* 按钮 */
     .sl-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 28px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,box-shadow .15s}
@@ -152,8 +153,8 @@
       .sl-grid2{gap:20px}
     }
     @media (max-width:720px){
-      #sl-landing .wrap{padding:0 16px}
-      #sl-landing section{padding:64px 0}
+      :where(#sl-landing) .wrap{padding-left:16px;padding-right:16px}
+      :where(#sl-landing) section{padding:64px 0}
       .sl-nav .wrap{gap:12px}
       .sl-nav .sl-nav-end{gap:10px}
       .sl-nav .sl-nav-end .sl-btn{padding:0 14px}
