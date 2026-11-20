@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "preview:theme": "node scripts/preview-theme.mjs",
+    "test:theme": "node --test tests/Theme/theme.test.cjs"
+  },
+  "devDependencies": {
+    "css-tree": "^3.2.1",
+    "jsdom": "^29.1.1"
+  },
   "dependencies": {
     "chokidar": "^4.0.3"
   }
