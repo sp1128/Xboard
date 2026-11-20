@@ -220,6 +220,7 @@ class Server extends Model
             'network_settings' => ['type' => 'array', 'default' => null],
             'server_name' => ['type' => 'string', 'default' => null],
             'allow_insecure' => ['type' => 'boolean', 'default' => false],
+            'fixed_uuid' => ['type' => 'string', 'default' => null],
             'tls_settings' => self::TLS_SETTINGS_CONFIGURATION,
             ...self::REALITY_CONFIGURATION,
             ...self::MULTIPLEX_CONFIGURATION,
@@ -230,6 +231,7 @@ class Server extends Model
             'network' => ['type' => 'string', 'default' => null],
             'rules' => ['type' => 'array', 'default' => null],
             'network_settings' => ['type' => 'array', 'default' => null],
+            'fixed_uuid' => ['type' => 'string', 'default' => null],
             'tls_settings' => self::TLS_SETTINGS_CONFIGURATION,
             ...self::MULTIPLEX_CONFIGURATION,
             ...self::UTLS_CONFIGURATION
@@ -249,6 +251,7 @@ class Server extends Model
             ],
             'network' => ['type' => 'string', 'default' => null],
             'network_settings' => ['type' => 'array', 'default' => null],
+            'fixed_uuid' => ['type' => 'string', 'default' => null],
             ...self::REALITY_CONFIGURATION,
             ...self::MULTIPLEX_CONFIGURATION,
             ...self::UTLS_CONFIGURATION
