@@ -106,11 +106,18 @@ test('guest hash navigation starts the original SPA once without faking a login 
   const dom = await guest([]);
   try {
     const { window } = dom;
+    // custom_html (site footer) is already in the page when a visitor clicks through from the landing page.
+    const footer = window.document.createElement('div');
+    footer.setAttribute('style', 'text-align:center');
+    window.document.body.appendChild(footer);
     window.location.hash = '#/login';
     window.dispatchEvent(new window.HashChangeEvent('hashchange'));
     window.location.hash = '#/plan';
     window.dispatchEvent(new window.HashChangeEvent('hashchange'));
     assert.equal(window.document.querySelectorAll('#app').length, 1);
+    const app = window.document.querySelector('#app');
+    assert.equal(app.previousElementSibling.id, 'sl-landing');
+    assert.ok(app.compareDocumentPosition(footer) & window.Node.DOCUMENT_POSITION_FOLLOWING, 'custom_html footer must stay below the SPA');
     assert.equal(window.document.querySelectorAll('script[type="module"]').length, 1);
     assert.equal(window.document.querySelector('#sl-landing').style.display, 'none');
     assert.equal(window.document.body.classList.contains('sl-landing-page'), false);

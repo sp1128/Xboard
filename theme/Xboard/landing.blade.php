@@ -436,7 +436,9 @@
       document.body.classList.remove('sl-landing-page');
       var app = document.createElement('div');
       app.id = 'app';
-      document.body.appendChild(app);
+      /* 紧跟在首页容器后面：从首页点进来时 custom_html 已经渲染，追加到 body 末尾会把它顶到 SPA 上方 */
+      if(landing) landing.parentNode.insertBefore(app, landing.nextSibling);
+      else document.body.appendChild(app);
       var s = document.createElement('script');
       s.type = 'module'; s.setAttribute('crossorigin','');
       s.src = '/theme/{{$theme}}/assets/umi.js';

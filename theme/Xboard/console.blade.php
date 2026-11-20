@@ -25,6 +25,8 @@ html.dark{--sl-primary-soft:rgba(22,93,255,.16);--sl-bg:#17171a;--sl-surface:#23
 #app .n-layout-sider .h-15{justify-content:flex-start;padding-left:20px;height:56px;border-bottom:1px solid var(--sl-line)}
 #app .n-layout-sider .title-text{display:flex;align-items:center;gap:8px;margin:0;font-size:16px;color:var(--sl-text)!important}
 #app .n-layout-sider .title-text:before{content:"✦";display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--sl-primary);color:#fff;font-size:13px;font-weight:400}
+#app .n-layout-sider img+.title-text:before{display:none}/* 后台设了站点 logo 时只显示 logo，不再叠一个 ✦ */
+#app .n-layout-sider .h-15>img{border-radius:6px}
 #app .side-menu{padding:8px 8px 16px}
 #app .n-menu{--n-item-height:38px!important;--n-border-radius:6px!important;--n-item-text-color:var(--sl-text)!important;--n-item-icon-color:var(--sl-muted)!important;--n-item-color-hover:var(--sl-bg)!important;--n-item-color-active:var(--sl-primary-soft)!important;--n-item-color-active-hover:var(--sl-primary-soft)!important;--n-item-text-color-active:var(--sl-primary)!important;--n-item-text-color-active-hover:var(--sl-primary)!important;--n-item-icon-color-active:var(--sl-primary)!important;--n-item-icon-color-active-hover:var(--sl-primary)!important;--n-group-text-color:var(--sl-muted)!important;font-size:14px}
 #app .n-menu .n-menu-item{margin-top:2px}
