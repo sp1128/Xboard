@@ -265,6 +265,7 @@ class Server extends Model
         ],
         self::TYPE_HYSTERIA => [
             'version' => ['type' => 'integer', 'default' => 2],
+            'fixed_uuid' => ['type' => 'string', 'default' => null],
             'bandwidth' => [
                 'type' => 'object',
                 'fields' => [
@@ -288,6 +289,10 @@ class Server extends Model
             'congestion_control' => ['type' => 'string', 'default' => 'cubic'],
             'alpn' => ['type' => 'array', 'default' => ['h3']],
             'udp_relay_mode' => ['type' => 'string', 'default' => 'native'],
+            'fixed_uuid' => ['type' => 'string', 'default' => null],
+            'fixed_password' => ['type' => 'string', 'default' => null],
+            'reduce_rtt' => ['type' => 'boolean', 'default' => null],
+            'max_udp_relay_packet_size' => ['type' => 'integer', 'default' => null],
             'tls' => self::TLS_CONFIGURATION
         ],
         self::TYPE_ANYTLS => [

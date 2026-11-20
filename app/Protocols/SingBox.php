@@ -758,8 +758,10 @@ class SingBox extends AbstractProtocol
         if (data_get($protocol_settings, 'version') === 4) {
             $array['token'] = $password;
         } else {
-            $array['uuid'] = $password;
-            $array['password'] = $password;
+            // 固定凭证（转售节点）：UUID 与密码是两个不同的固定值时分别取用；
+            // 注意 SingBox 调用方传的是 $this->user['uuid'] 而非 $item['password']，故直接从 protocol_settings 读固定值，未配置则回落到 $password
+            $array['uuid'] = data_get($protocol_settings, 'fixed_uuid') ?: $password;
+            $array['password'] = data_get($protocol_settings, 'fixed_password') ?: $password;
         }
 
         return $array;

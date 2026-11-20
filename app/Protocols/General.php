@@ -373,8 +373,9 @@ class General extends AbstractProtocol
         $name = rawurlencode($server['name']);
         $addr = Helper::wrapIPv6($server['host']);
         $port = $server['port'];
-        $uuid = $password; // v2rayN格式里，uuid和password都是密码部分
-        $pass = $password;
+        // 固定凭证（转售节点）：UUID 与密码是两个不同的固定值时分别取用，未配置则回落到传入的 $password
+        $uuid = data_get($protocol_settings, 'fixed_uuid') ?: $password;
+        $pass = data_get($protocol_settings, 'fixed_password') ?: $password;
 
         $queryParams = [];
 
@@ -402,6 +403,14 @@ class General extends AbstractProtocol
 
         if (data_get($protocol_settings, 'tls.allow_insecure')) {
             $queryParams['insecure'] = '1';
+        }
+
+        if (data_get($protocol_settings, 'reduce_rtt')) {
+            $queryParams['reduce_rtt'] = '1';
+        }
+
+        if ($maxPacketSize = data_get($protocol_settings, 'max_udp_relay_packet_size')) {
+            $queryParams['max_udp_relay_packet_size'] = $maxPacketSize;
         }
 
         $query = http_build_query($queryParams);

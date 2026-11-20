@@ -423,8 +423,9 @@ class Shadowrocket extends AbstractProtocol
         if (data_get($protocol_settings, 'version') === 4) {
             $params['token'] = $password;
         } else {
-            $params['uuid'] = $password;
-            $params['password'] = $password;
+            // 固定凭证（转售节点）：UUID 与密码是两个不同的固定值时分别取用，未配置则回落到 $password
+            $params['uuid'] = data_get($protocol_settings, 'fixed_uuid') ?: $password;
+            $params['password'] = data_get($protocol_settings, 'fixed_password') ?: $password;
         }
         $query = http_build_query($params);
         $addr = Helper::wrapIPv6($server['host']);
