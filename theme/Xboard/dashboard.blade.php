@@ -95,6 +95,78 @@
     });
   })();
   </script>
+  <!-- ===== 星屿StarLink 主题注入（第二阶段）：订阅弹窗加“导出配置文件” ===== -->
+  <script>
+  (function(){
+    var TOKEN_KEY = 'VUE_NAIVE_ACCESS_TOKEN';
+    var ROW_MARK = 'data-sl-export';
+    function getAccessToken(){
+      try{
+        var raw = localStorage.getItem(TOKEN_KEY);
+        if(!raw || raw === 'null' || raw === 'undefined') return null;
+        try{ var o = JSON.parse(raw); if(o && typeof o === 'object' && o.value) return o.value; }catch(e){}
+        return raw;
+      }catch(e){ return null; }
+    }
+    function findHiddifyRow(){
+      var els = document.querySelectorAll('.cursor-pointer');
+      for(var i = 0; i < els.length; i++){
+        var el = els[i];
+        if(el.getAttribute(ROW_MARK)) continue;
+        var t = el.textContent || '';
+        if(t.indexOf('Hiddify') !== -1 && el.classList.contains('flex')) return el;
+      }
+      return null;
+    }
+    function insertExportRow(){
+      if(document.querySelector('[' + ROW_MARK + ']')) return;
+      var row = findHiddifyRow();
+      if(!row || !row.parentNode) return;
+      var clone = row.cloneNode(true);
+      clone.setAttribute(ROW_MARK, '1');
+      var iconDiv = clone.querySelector('div');
+      if(iconDiv){ iconDiv.innerHTML = '<span style="font-size:22px;line-height:32px;display:inline-block;width:32px;text-align:center;color:#165dff">↓</span>'; }
+      var divs = clone.querySelectorAll('div');
+      for(var i = 0; i < divs.length; i++){
+        if((divs[i].textContent || '').indexOf('Hiddify') !== -1){ divs[i].textContent = '导出配置文件'; }
+      }
+      clone.addEventListener('click', function(){ downloadConfig(); });
+      row.parentNode.insertBefore(clone, row.nextSibling);
+    }
+    async function downloadConfig(){
+      try{
+        var token = getAccessToken();
+        if(!token){ alert('登录已过期，请重新登录后再试'); return; }
+        var res = await fetch('/api/v1/user/getSubscribe', {headers:{'Authorization':'Bearer ' + token}});
+        var body = await res.json();
+        var subUrl = null;
+        if(body){
+          if(typeof body.data === 'string') subUrl = body.data;
+          else if(body.data && typeof body.data.subscribe_url === 'string') subUrl = body.data.subscribe_url;
+          else if(typeof body === 'string') subUrl = body;
+        }
+        if(!subUrl || subUrl.indexOf('http') !== 0) throw new Error('no subscribe url');
+        var dlUrl = subUrl + (subUrl.indexOf('?') === -1 ? '?flag=meta' : '&flag=meta');
+        var r2 = await fetch(dlUrl);
+        if(!r2.ok) throw new Error('subscribe fetch failed');
+        var text = await r2.text();
+        if(!text || text.indexOf('proxies') === -1) throw new Error('bad config');
+        var blob = new Blob([text], {type:'text/yaml'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'StarLink.yaml';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      }catch(e){
+        alert('导出失败，请重试，或用“复制订阅地址”导入');
+      }
+    }
+    var obs = new MutationObserver(function(){ insertExportRow(); });
+    obs.observe(document.body, {childList:true, subtree:true});
+    insertExportRow();
+  })();
+  </script>
 </body>
 
 </html>
