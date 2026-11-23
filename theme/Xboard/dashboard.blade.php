@@ -46,6 +46,8 @@
     #sl-dl-panel a{display:block;color:var(--sl-primary,#165dff);padding:7px 0;border-bottom:1px solid var(--sl-line,#e5e6eb)}
     #sl-dl-panel a:last-child{border-bottom:none}
     #sl-dl-panel p{color:var(--sl-muted,#86909c);font-size:12px;margin-top:10px;line-height:1.6}
+    /* 导出配置文件行：它是 n-list 的直接子级（不在任何 n-list-item 里），hover 背景自己补 */
+    [data-sl-export]:hover{background-color:rgb(243,244,246)}
     @media (max-width:640px){
       #sl-dl-btn{bottom:76px}
       #sl-dl-panel{bottom:140px}
@@ -130,8 +132,13 @@
       for(var i = 0; i < divs.length; i++){
         if((divs[i].textContent || '').indexOf('Hiddify') !== -1){ divs[i].textContent = '导出配置文件'; }
       }
-      clone.addEventListener('click', function(){ downloadConfig(); });
-      row.parentNode.insertBefore(clone, row.nextSibling);
+      clone.addEventListener('click', function(e){ if(e){ e.stopPropagation(); if(e.preventDefault) e.preventDefault(); } downloadConfig(); });
+      // 注意：row 的父级是 Naive UI 的 n-list-item（hover 背景挂在它身上）。
+      // 克隆行必须插到 list-item 后面（成为 n-list 的直接子级）；插在 row 后面会落进
+      // Hiddify 的 list-item 里，导致 hover 其中一行时整个 item（含两行）一起变灰。
+      var item = (row.closest && row.closest('.n-list-item')) || row.parentNode;
+      var parent = item.parentNode;
+      if(parent) parent.insertBefore(clone, item.nextSibling);
     }
     async function downloadConfig(){
       try{
