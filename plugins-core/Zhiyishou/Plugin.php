@@ -52,6 +52,18 @@ class Plugin extends AbstractPlugin implements PaymentInterface
                 'label' => '自定义商品名称',
                 'type' => 'string',
                 'description' => '将会体现在支付宝账单中'
+            ],
+            'agent_id' => [
+                'label' => '智能体App ID',
+                'type' => 'string',
+                'required' => true,
+                'description' => '百炼智能体应用ID（alipay.aipay.trade.precreate 必传）'
+            ],
+            'agent_name' => [
+                'label' => '智能体名称',
+                'type' => 'string',
+                'required' => true,
+                'description' => '百炼智能体应用名称（alipay.aipay.trade.precreate 必传）'
             ]
         ];
     }
