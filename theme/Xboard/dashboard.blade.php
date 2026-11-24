@@ -201,12 +201,12 @@
       var card = qr.closest('.n-card');
       if(!card) return;
       if(!card.classList.contains('sl-pay-modal')) card.classList.add('sl-pay-modal');
-      // 等待支付中文字加样式
+      // 等待支付中文字加样式（只匹配最内层、不含子 div 的那个，避免误伤卡片容器）
       var waitEl = null;
       var divs = card.querySelectorAll('div');
       for(var i = 0; i < divs.length; i++){
         var t = (divs[i].textContent || '').trim();
-        if(t === '等待支付中' || t.indexOf('等待支付中') === 0){
+        if(t === '等待支付中' && divs[i].querySelectorAll('div').length === 0){
           if(!divs[i].classList.contains('sl-pay-wait')) divs[i].classList.add('sl-pay-wait');
           waitEl = divs[i];
         }
