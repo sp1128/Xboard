@@ -172,7 +172,8 @@ class MailService
         $flag = CacheKey::get('LAST_SEND_EMAIL_REMIND_TRAFFIC', $user->id);
         if (Cache::get($flag))
             return;
-        if (!Cache::put($flag, 1, 24 * 3600))
+        // 发过一次以后不再发（仅限从未收到过提醒的新用户），有效期 10 年
+        if (!Cache::put($flag, 1, 3650 * 24 * 3600))
             return;
 
         SendEmailJob::dispatch([
