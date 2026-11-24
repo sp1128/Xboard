@@ -16,7 +16,7 @@ class AuthRegister extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email:strict|max:64',
+            'email' => ['required', 'email:strict', 'max:64', 'regex:/^[\x00-\x7F]+$/'],
             'password' => 'required|min:8'
         ];
     }
@@ -26,6 +26,7 @@ class AuthRegister extends FormRequest
         return [
             'email.required' => __('Email can not be empty'),
             'email.email' => __('Email format is incorrect'),
+            'email.regex' => __('Email format is incorrect'),
             'password.required' => __('Password can not be empty'),
             'password.min' => __('Password must be greater than 8 digits')
         ];
