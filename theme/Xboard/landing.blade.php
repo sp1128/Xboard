@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="星屿StarLink：住宅 IP 节点（日本 100 分 / 美国 97 分）+ 32 个机房 IP 节点，覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度，日常用 AI 没问题。" />
+  <meta name="description" content="星屿StarLink：住宅 IP 节点（日本 100 分 / 美国 97 分）+ 36 个机房 IP 节点，覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度，日常用 AI 没问题。" />
   <title>{{$title}} - 住宅 IP · 机房 IP 节点</title>
   <style>
     /* 访客落地页。布局参考聚盟云：深色底、左文右图首屏、套餐表、2×2 卖点、发光 CTA。 */
@@ -211,7 +211,7 @@
         <div>
           <span class="sl-pill">住宅 IP · 机房 IP | 9 个地区 | AI 可用</span>
           <h1><b>星屿StarLink</b><br />连接世界，探索更多可能</h1>
-          <p class="sl-hero-desc"><i aria-hidden="true">#</i><span>月付含日本、美国原生住宅 IP，另送 6 个机房 IP 节点 + 2 个优化节点；机房 IP 覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度。日常用 AI 没问题，早晚高峰可能会卡顿；需要三网优化线路，可提工单定制（另外收费）。</span></p>
+          <p class="sl-hero-desc"><i aria-hidden="true">#</i><span>月付含日本、美国原生住宅 IP，另送 10 个机房 IP 节点 + 2 个优化节点；机房 IP 覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度。日常用 AI 没问题，早晚高峰可能会卡顿；需要三网优化线路，可提工单定制（另外收费）。</span></p>
           <div class="sl-scores">
             <span><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>日本节点<b>100 分</b></span>
             <span><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#b22234"/><path d="M0 3h30M0 6h30M0 9h30M0 12h30M0 15h30M0 18h30" stroke="#fff" stroke-width="1.5"/><rect width="13" height="10.5" fill="#3c3b6e"/></svg>美国节点<b>97 分</b></span>
@@ -287,7 +287,7 @@
           <div class="sl-feature">
             <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
             <h3>住宅 IP 节点</h3>
-            <p>住宅 IP 节点覆盖日本与美国；月付另送 6 个机房 IP 节点（日本、新加坡、香港、台湾、美国、德国）+ 2 个 Kamatera 优化节点，机房 IP 另有 32 个节点可选。早晚高峰可能会卡顿，我们不夸大线路质量。</p>
+            <p>住宅 IP 节点覆盖日本与美国；月付另送 10 个机房 IP 节点（日本、新加坡、香港、台湾、美国、德国）+ 2 个 Kamatera 优化节点，机房 IP 另有 36 个节点可选。早晚高峰可能会卡顿，我们不夸大线路质量。</p>
           </div>
           <div class="sl-feature">
             <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg></div>
@@ -328,7 +328,7 @@
             <p>普通线路住宅 IP</p>
           </div>
         </div>
-        <div class="sl-nodes-mojie">机房 IP：32 个节点，覆盖日本 · 新加坡 · 香港 · 台湾 · 美国 · 加拿大 · 德国 · 英国 · 印度 — 流量套餐可选，月付另送其中 6 个</div>
+        <div class="sl-nodes-mojie">机房 IP：36 个节点，覆盖日本 · 新加坡 · 香港 · 台湾 · 美国 · 加拿大 · 德国 · 英国 · 印度 — 流量套餐可选，月付另送其中 10 个</div>
         <p class="sl-nodes-note">评分于 2026-11-19 实测</p>
       </div>
     </section>
