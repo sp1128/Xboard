@@ -190,6 +190,9 @@
     /* 支付后提示：浅底圆角提示框，占满卡片宽，强制换行 */
     .sl-pay-tip{margin-top:18px;width:100%;min-width:0;max-width:100%;flex-shrink:1;box-sizing:border-box;background:#fdf8e7;border:1px solid #f0e6c8;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.7;color:#7a6a2f;text-align:left;white-space:normal!important;word-break:break-all!important;overflow-wrap:break-word!important}
     .sl-pay-tip b{color:#8a6d00}
+    /* 支付方式行：名称和图标各 flex:1 平分半行，图标落在行中部；改成内容宽度紧贴居左 */
+    .n-card__content>div.border-2.flex>div{flex:none!important}
+    .n-card__content>div.border-2.flex>div:last-child{margin-left:12px;display:flex;align-items:center}
   </style>
   <script>
   (function(){
