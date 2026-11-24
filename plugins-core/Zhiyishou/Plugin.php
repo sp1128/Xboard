@@ -8,6 +8,8 @@ use App\Exceptions\ApiException;
 use Illuminate\Support\Facades\Log;
 use Plugin\Zhiyishou\library\Zhiyishou;
 
+require_once __DIR__ . '/library/Zhiyishou.php';
+
 class Plugin extends AbstractPlugin implements PaymentInterface
 {
     public function boot(): void
