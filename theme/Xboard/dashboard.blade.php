@@ -201,6 +201,9 @@
       var card = qr.closest('.n-card');
       if(!card) return;
       if(!card.classList.contains('sl-pay-modal')) card.classList.add('sl-pay-modal');
+      // 二维码外层占位 div 的 padding-bottom:100% 会按宽度撑出 400px 空高，改成 20px
+      var qrWrap = qr.parentElement;
+      if(qrWrap && qrWrap.style && qrWrap.style.paddingBottom) qrWrap.style.paddingBottom = '20px';
       // 等待支付中文字加样式（只匹配最内层、不含子 div 的那个，避免误伤卡片容器）
       var waitEl = null;
       var divs = card.querySelectorAll('div');
