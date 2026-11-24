@@ -60,23 +60,22 @@ class Plugin extends AbstractPlugin implements PaymentInterface
     {
         try {
             $gateway = new Zhiyishou();
-            // 智易收开通的是电脑网站支付（page.pay），不是当面付（precreate）
-            $gateway->setMethod('alipay.trade.page.pay');
+            // 智能体个人收款的下单接口（应用已签约）：alipay.aipay.trade.precreate
+            // 注意不是当面付的 alipay.trade.precreate，也不是电脑网站支付的 page.pay
+            $gateway->setMethod('alipay.aipay.trade.precreate');
             $gateway->setAppId($this->getConfig('app_id'));
             $gateway->setPrivateKey($this->getConfig('private_key'));
             $gateway->setAlipayPublicKey($this->getConfig('public_key'));
             $gateway->setNotifyUrl($order['notify_url']);
-            $gateway->setReturnUrl($order['return_url'] ?? null);
             $gateway->setBizContent([
                 'subject' => $this->getConfig('product_name') ?? (admin_setting('app_name', 'XBoard') . ' - 订阅'),
                 'out_trade_no' => $order['trade_no'],
-                'total_amount' => $order['total_amount'] / 100,
-                'product_code' => 'FAST_INSTANT_TRADE_PAY',
+                'total_amount' => $order['total_amount'] / 100
             ]);
-            // page.pay 返回的是收银台页面：直接返回带签名的网关 URL，前端跳转过去扫码付款
+            $gateway->send();
             return [
-                'type' => 1,
-                'data' => $gateway->getPagePayUrl()
+                'type' => 0,
+                'data' => $gateway->getQrCodeUrl()
             ];
         } catch (\Exception $e) {
             Log::error($e);
