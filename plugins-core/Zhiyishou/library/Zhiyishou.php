@@ -24,7 +24,9 @@ class Zhiyishou
         if (is_string($data)) {
             parse_str($data, $data);
         }
-        $sign = $data['sign'];
+        $sign = $data['sign'] ?? '';
+        if ($sign === '')
+            return false;
         unset($data['sign']);
         unset($data['sign_type']);
         ksort($data);
