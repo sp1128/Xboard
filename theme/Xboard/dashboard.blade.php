@@ -174,6 +174,56 @@
     insertExportRow();
   })();
   </script>
+  <!-- ===== 星屿StarLink 主题注入（第三阶段）：支付弹窗美化 + 支付后提示 ===== -->
+  <style>
+    /* 支付弹窗：卡片圆角 + 品牌金边 */
+    .sl-pay-modal{border-radius:18px!important;overflow:hidden}
+    .sl-pay-modal .n-card__content{padding:28px 28px 22px!important}
+    /* 二维码：白底圆角卡片 + 阴影，居中 */
+    .sl-pay-modal .pay-qrcode{position:relative!important;height:auto!important;width:auto!important;display:flex;justify-content:center;padding:14px;background:#fff;border:1px solid #f0e6c8;border-radius:14px;box-shadow:0 8px 24px rgba(201,162,39,.16);margin:6px auto 4px}
+    .sl-pay-modal .pay-qrcode canvas,.sl-pay-modal .pay-qrcode svg{width:230px!important;height:230px!important}
+    /* 等待支付中：金色 + 脉冲圆点 */
+    .sl-pay-wait{font-size:17px!important;font-weight:600;color:#b08d1e!important;text-align:center;margin-top:16px!important;display:flex;align-items:center;justify-content:center;gap:8px}
+    .sl-pay-wait::before{content:'';width:9px;height:9px;border-radius:50%;background:#c9a227;animation:sl-pay-pulse 1.2s ease-in-out infinite}
+    @keyframes sl-pay-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+    /* 支付后提示：浅底圆角提示框 */
+    .sl-pay-tip{margin-top:18px;background:#fdf8e7;border:1px solid #f0e6c8;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.7;color:#7a6a2f;text-align:left}
+    .sl-pay-tip b{color:#8a6d00}
+  </style>
+  <script>
+  (function(){
+    var TIP_MARK = 'data-sl-pay-tip';
+    var TIP_TEXT = '已支付但页面没有反应？请先查看订阅是否已生效：<b>已生效就不用管它</b>；还没生效请提交工单或联系客服，我们会尽快处理。';
+    function enhancePayModal(){
+      var qr = document.querySelector('.pay-qrcode');
+      if(!qr) return;
+      var card = qr.closest('.n-card');
+      if(!card) return;
+      if(!card.classList.contains('sl-pay-modal')) card.classList.add('sl-pay-modal');
+      // 等待支付中文字加样式
+      var waitEl = null;
+      var divs = card.querySelectorAll('div');
+      for(var i = 0; i < divs.length; i++){
+        var t = (divs[i].textContent || '').trim();
+        if(t === '等待支付中' || t.indexOf('等待支付中') === 0){
+          if(!divs[i].classList.contains('sl-pay-wait')) divs[i].classList.add('sl-pay-wait');
+          waitEl = divs[i];
+        }
+      }
+      if(!waitEl) return;
+      // 提示框：插到等待文字后面，已存在则跳过
+      if(card.querySelector('[' + TIP_MARK + ']')) return;
+      var tip = document.createElement('div');
+      tip.setAttribute(TIP_MARK, '1');
+      tip.className = 'sl-pay-tip';
+      tip.innerHTML = TIP_TEXT;
+      waitEl.parentNode.insertBefore(tip, waitEl.nextSibling);
+    }
+    var obs = new MutationObserver(function(){ enhancePayModal(); });
+    obs.observe(document.body, {childList:true, subtree:true});
+    enhancePayModal();
+  })();
+  </script>
 </body>
 
 </html>
