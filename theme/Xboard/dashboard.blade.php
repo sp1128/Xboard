@@ -187,8 +187,8 @@
     .sl-pay-wait{white-space:nowrap!important;font-size:17px!important;font-weight:600;color:#b08d1e!important;text-align:center;margin-top:16px!important;display:flex;align-items:center;justify-content:center;gap:8px}
     .sl-pay-wait::before{content:'';width:9px;height:9px;border-radius:50%;background:#c9a227;animation:sl-pay-pulse 1.2s ease-in-out infinite}
     @keyframes sl-pay-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
-    /* 支付后提示：浅底圆角提示框，占满卡片宽 */
-    .sl-pay-tip{margin-top:18px;width:100%;box-sizing:border-box;background:#fdf8e7;border:1px solid #f0e6c8;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.7;color:#7a6a2f;text-align:left}
+    /* 支付后提示：浅底圆角提示框，占满卡片宽，强制换行 */
+    .sl-pay-tip{margin-top:18px;width:100%;min-width:0;max-width:100%;flex-shrink:1;box-sizing:border-box;background:#fdf8e7;border:1px solid #f0e6c8;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.7;color:#7a6a2f;text-align:left;white-space:normal!important;word-break:break-all!important;overflow-wrap:break-word!important}
     .sl-pay-tip b{color:#8a6d00}
   </style>
   <script>
