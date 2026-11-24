@@ -12,6 +12,7 @@ class Zhiyishou
     public $bizContent;
     public $method;
     public $notifyUrl;
+    public $returnUrl;
     public $response;
 
     public function __construct()
@@ -70,6 +71,21 @@ class Zhiyishou
         $this->notifyUrl = $url;
     }
 
+    public function setReturnUrl($url)
+    {
+        $this->returnUrl = $url;
+    }
+
+    /**
+     * 电脑网站支付（page.pay）：不调网关取 JSON，直接返回带签名的网关 URL，
+     * 用户打开后进入支付宝收银台扫码付款。
+     */
+    public function getPagePayUrl(): string
+    {
+        $params = $this->buildParam();
+        return 'https://openapi.alipay.com/gateway.do?' . http_build_query($params);
+    }
+
     public function send()
     {
         $response = Http::get('https://openapi.alipay.com/gateway.do', $this->buildParam())->json();
@@ -109,6 +125,8 @@ class Zhiyishou
         ];
         if ($this->notifyUrl)
             $params['notify_url'] = $this->notifyUrl;
+        if ($this->returnUrl)
+            $params['return_url'] = $this->returnUrl;
         ksort($params);
         $params['sign'] = $this->buildSign($this->buildQuery($params));
         return $params;
