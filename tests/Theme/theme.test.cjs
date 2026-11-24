@@ -142,6 +142,25 @@ test('console layer is styles only and loads on both entry pages', () => {
   assert.doesNotMatch(read('dashboard') + read('landing'), /Xboard\.(appearance|glass)/);
 });
 
+test('solid primary fill skips text buttons such as order actions', () => {
+  // Naive UI text buttons share n-button--primary-type; only their inline style tells them apart.
+  const style = read('console').match(/<style[^>]*>([\s\S]*?)<\/style>/)[1];
+  const fills = [];
+  css.walk(css.parse(style), {
+    visit: 'Rule',
+    enter(rule) {
+      const fill = rule.block.children.some(d => d.type === 'Declaration' && d.property === '--n-color' && /--sl-primary\)/.test(css.generate(d.value)));
+      if (fill) fills.push(css.generate(rule.prelude));
+    }
+  });
+  const { window } = new JSDOM('<button id="solid" class="n-button n-button--primary-type" style="--n-color: #0665d0; --n-padding: 0 18px;"></button>'
+    + '<button id="text" class="n-button n-button--primary-type" style="--n-color: #0000; --n-padding: initial;"></button>');
+  const hits = id => fills.some(selector => window.document.getElementById(id).matches(selector));
+  assert.equal(hits('solid'), true);
+  assert.equal(hits('text'), false);
+  window.close();
+});
+
 const dashScript = scripts(read('console-dashboard'))[0];
 const DASH_HTML = '<div id="app"><section class="cus-scroll-y"><div>'
   + '<div class="n-card" id="banner"></div>'
