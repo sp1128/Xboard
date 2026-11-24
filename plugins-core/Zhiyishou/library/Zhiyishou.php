@@ -106,6 +106,19 @@ class Zhiyishou
         return $response['qr_code'];
     }
 
+    /**
+     * 智能体收款单（alipay.aipay.trade.precreate）返回的是 pay_url（alipays:// 深链）
+     * 与 pic_url（二维码图片地址）。前端把 type 0 的 data 编成二维码展示，
+     * 扫码后直接唤起支付宝 App 付款，所以返回 pay_url。
+     */
+    public function getPayUrl()
+    {
+        $response = $this->response;
+        if (!isset($response['pay_url']))
+            throw new \Exception('获取付款链接失败');
+        return $response['pay_url'];
+    }
+
     public function getResponse()
     {
         return $this->response;

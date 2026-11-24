@@ -70,12 +70,15 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             $gateway->setBizContent([
                 'subject' => $this->getConfig('product_name') ?? (admin_setting('app_name', 'XBoard') . ' - 订阅'),
                 'out_trade_no' => $order['trade_no'],
-                'total_amount' => $order['total_amount'] / 100
+                'total_amount' => $order['total_amount'] / 100,
+                'amount' => $order['total_amount'] / 100,
+                'agent_id' => $this->getConfig('agent_id') ?? '',
+                'agent_name' => $this->getConfig('agent_name') ?? '',
             ]);
             $gateway->send();
             return [
                 'type' => 0,
-                'data' => $gateway->getQrCodeUrl()
+                'data' => $gateway->getPayUrl()
             ];
         } catch (\Exception $e) {
             Log::error($e);
