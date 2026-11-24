@@ -225,6 +225,57 @@
     enhancePayModal();
   })();
   </script>
+  <!-- ===== 星屿StarLink 主题注入（第四阶段）：结账按钮防重复点击 ===== -->
+  <style>
+    .sl-checkout-busy{opacity:.6!important;pointer-events:none!important;cursor:not-allowed!important}
+    .sl-checkout-busy .n-button__content::after{content:'处理中…';margin-left:6px}
+  </style>
+  <script>
+  (function(){
+    var BUSY_MS = 10000; // 最多锁 10 秒，超时自动解锁（接口失败时也能重按）
+    var busy = false;
+    var busyTimer = null;
+    function findCheckoutBtn(){
+      var btns = document.querySelectorAll('button');
+      for(var i = 0; i < btns.length; i++){
+        var t = (btns[i].textContent || '').trim();
+        if(t === '结账' || t.indexOf('结账') === 0) return btns[i];
+      }
+      return null;
+    }
+    function unlock(){
+      busy = false;
+      if(busyTimer){ clearTimeout(busyTimer); busyTimer = null; }
+      var btn = findCheckoutBtn();
+      if(btn) btn.classList.remove('sl-checkout-busy');
+    }
+    function lock(){
+      busy = true;
+      var btn = findCheckoutBtn();
+      if(btn) btn.classList.add('sl-checkout-busy');
+      if(busyTimer) clearTimeout(busyTimer);
+      busyTimer = setTimeout(unlock, BUSY_MS);
+    }
+    // 捕获阶段拦截重复点击：第一次放行并上锁，锁住期间的点击直接拦掉
+    document.addEventListener('click', function(e){
+      var btn = e.target && e.target.closest ? e.target.closest('button') : null;
+      if(!btn) return;
+      var t = (btn.textContent || '').trim();
+      if(t !== '结账' && t.indexOf('结账') !== 0) return;
+      if(busy){
+        if(e.stopPropagation) e.stopPropagation();
+        if(e.preventDefault) e.preventDefault();
+        return;
+      }
+      lock();
+    }, true);
+    // 支付弹窗出现即解锁（二维码已出，允许关闭后重按）
+    var obs = new MutationObserver(function(){
+      if(document.querySelector('.pay-qrcode')) unlock();
+    });
+    obs.observe(document.body, {childList:true, subtree:true});
+  })();
+  </script>
 </body>
 
 </html>
