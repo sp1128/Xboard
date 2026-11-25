@@ -293,3 +293,25 @@ test('order checkout renders image payment icons cleanly and lets user switch pa
     assert.ok(doc.getElementById('sl-pay-now'), 'clicking back must restore payment method selector');
   } finally { dom.window.close(); }
 });
+
+test('liquid glass dock persists across route changes without resetting lens to left', async () => {
+  const { dom } = await mountSpa('#/node', {
+    'user/server/fetch': [],
+    'user/plan/fetch': []
+  });
+  try {
+    const doc = dom.window.document;
+    const dock = doc.getElementById('sl-liquid-dock');
+    const lens = dock.querySelector('.liquid-lens');
+    assert.equal(dock.dataset.active, '2');
+    assert.match(lens.style.transform, /200%|120px/);
+
+    // Simulate navigating to #/plan (index 1) and verify same DOM node persists without recreation
+    dom.window.location.hash = '#/plan';
+    dom.window.dispatchEvent(new dom.window.HashChangeEvent('hashchange'));
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.equal(doc.getElementById('sl-liquid-dock'), dock, 'dock DOM node must not be recreated on route change');
+    assert.equal(dock.dataset.active, '1');
+    assert.match(lens.style.transform, /60px/);
+  } finally { dom.window.close(); }
+});

@@ -1764,8 +1764,18 @@
 
           '<main class="sl-content">' + mainHtml + '</main>' +
         '</div>' +
+      '</div>'
+    );
+  }
 
-        // iOS 26 Floating Draggable Liquid Glass Capsule Dock (Mobile)
+  var dockApi = null;
+
+  function ensureLiquidDock(activeIdx) {
+    var host = document.getElementById('sl-dock-host');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'sl-dock-host';
+      host.innerHTML =
         '<div class="sl-dock-fade" aria-hidden="true"></div>' +
         '<div class="sl-dock-wrap">' +
           '<nav id="sl-liquid-dock" class="liquid-dock" data-active="' + activeIdx + '" aria-label="底部导航">' +
@@ -1776,22 +1786,42 @@
               '</div>';
             }).join('') +
           '</nav>' +
-        '</div>' +
-      '</div>'
-    );
+        '</div>';
+      document.body.appendChild(host);
+      dockApi = bindLiquidDock(host.querySelector('#sl-liquid-dock'), activeIdx);
+    }
+    host.style.display = '';
+    if (dockApi) dockApi.sync(activeIdx);
   }
 
-  function initLiquidDock() {
-    var dock = document.getElementById('sl-liquid-dock');
-    if (!dock) return;
+  function hideLiquidDock() {
+    var host = document.getElementById('sl-dock-host');
+    if (host) host.style.display = 'none';
+  }
+
+  function bindLiquidDock(dock, initialIdx) {
     var lens = dock.querySelector('.liquid-lens');
     var tabs = Array.from(dock.querySelectorAll('.liquid-tab'));
-    var activeIdx = Number(dock.dataset.active || 0);
+    var activeIdx = Math.max(0, Math.min(tabs.length - 1, Number(initialIdx || 0)));
     var dragging = false;
+    var hasDragged = false;
+    var startX = 0;
 
     function slotWidth() {
       var inner = dock.clientWidth - 8;
       return inner > 0 ? inner / tabs.length : 60;
+    }
+
+    function applyImmediate(idx) {
+      var w = slotWidth();
+      lens.style.transition = 'none';
+      lens.style.width = w > 0 ? w + 'px' : 'calc((100% - 8px) / ' + tabs.length + ')';
+      lens.style.transform = w > 0
+        ? 'translate3d(' + (idx * w) + 'px, 0, 0) scale(1)'
+        : 'translate3d(' + (idx * 100) + '%, 0, 0) scale(1)';
+      tabs.forEach(function (t, i) { t.classList.toggle('is-active', i === idx); });
+      void lens.offsetWidth;
+      lens.style.transition = '';
     }
 
     function setVisual(x, scale, previewIdx) {
@@ -1803,7 +1833,7 @@
 
     function snapTo(idx, shouldNav) {
       activeIdx = Math.max(0, Math.min(tabs.length - 1, idx));
-      dock.dataset.active = activeIdx;
+      dock.dataset.active = String(activeIdx);
       setVisual(activeIdx * slotWidth(), 1, activeIdx);
       if (shouldNav) {
         var target = tabs[activeIdx] && tabs[activeIdx].dataset.route;
@@ -1824,14 +1854,20 @@
 
     dock.addEventListener('pointerdown', function (e) {
       dragging = true;
-      dock.classList.add('is-dragging');
-      if (dock.setPointerCapture) dock.setPointerCapture(e.pointerId);
-      var pos = locate(e.clientX);
-      setVisual(pos.rawX, 1.08, pos.idx);
+      hasDragged = false;
+      startX = e.clientX;
+      if (dock.setPointerCapture && e.pointerId != null) {
+        try { dock.setPointerCapture(e.pointerId); } catch (err) {}
+      }
     });
 
     dock.addEventListener('pointermove', function (e) {
       if (!dragging) return;
+      if (!hasDragged && Math.abs(e.clientX - startX) > 6) {
+        hasDragged = true;
+        dock.classList.add('is-dragging');
+      }
+      if (!hasDragged) return;
       var pos = locate(e.clientX);
       setVisual(pos.rawX, 1.08, pos.idx);
     });
@@ -1846,8 +1882,21 @@
 
     dock.addEventListener('pointerup', finish);
     dock.addEventListener('pointercancel', finish);
-    window.addEventListener('resize', function () { snapTo(activeIdx, false); });
-    requestAnimationFrame(function () { snapTo(activeIdx, false); });
+    window.addEventListener('resize', function () {
+      if (!dragging) applyImmediate(activeIdx);
+    });
+
+    // Position synchronously without transition on initial mount so it never flies in from the left
+    applyImmediate(activeIdx);
+
+    return {
+      sync: function (idx) {
+        var next = Math.max(0, Math.min(tabs.length - 1, idx));
+        if (dragging) return;
+        if (next === activeIdx && dock.dataset.active === String(next)) return;
+        snapTo(next, false);
+      }
+    };
   }
 
   /* -------------------- Render & Event Binding -------------------- */
@@ -1857,6 +1906,7 @@
     document.body.classList.add('sl-ios-body');
 
     if (isAuthRoute(state.route)) {
+      hideLiquidDock();
       root.innerHTML = renderAuth(state.route);
       bindAuthEvents();
       return;
@@ -1877,7 +1927,9 @@
     else bodyHtml = renderDashboard();
 
     root.innerHTML = renderShell(bodyHtml);
-    initLiquidDock();
+    var activeDock = activeDockKey(state.route);
+    var activeIdx = Math.max(0, DOCK_TABS.findIndex(function (t) { return t.key === activeDock; }));
+    ensureLiquidDock(activeIdx);
     bindShellEvents();
   }
 
