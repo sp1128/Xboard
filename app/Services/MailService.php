@@ -172,6 +172,15 @@ class MailService
         $flag = CacheKey::get('LAST_SEND_EMAIL_REMIND_TRAFFIC', $user->id);
         if (Cache::get($flag))
             return;
+        // 防重（持久化）：缓存会在部署清缓存时丢失，仅靠缓存去重部署后会重复发送。
+        // 邮件日志是持久的，已发过的以它为准；查到已发就补写缓存标志后跳过。
+        if (MailLog::where('email', $user->email)
+            ->where('template_name', 'like', '%remindTraffic%')
+            ->whereNull('error')
+            ->exists()) {
+            Cache::put($flag, 1, 3650 * 24 * 3600);
+            return;
+        }
         // 发过一次以后不再发（仅限从未收到过提醒的新用户），有效期 10 年
         if (!Cache::put($flag, 1, 3650 * 24 * 3600))
             return;

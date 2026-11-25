@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ApiException;
 use App\Jobs\OrderHandleJob;
+use App\Jobs\SendEmailJob;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\TrafficResetLog;
@@ -183,6 +184,43 @@ class OrderService
         }
 
         HookManager::call('order.open.after', $order);
+
+        $this->sendFirstOrderWelcomeEmail($order);
+    }
+
+    /**
+     * 首次订阅成功欢迎邮件：用户第一个已完成订单开通后，发送一次，
+     * 附完整使用教程与各平台客户端下载地址。
+     */
+    private function sendFirstOrderWelcomeEmail(Order $order): void
+    {
+        try {
+            $user = User::find($order->user_id);
+            if (!$user || !$user->email) {
+                return;
+            }
+            $completedCount = Order::where('user_id', $order->user_id)
+                ->where('status', Order::STATUS_COMPLETED)
+                ->count();
+            if ($completedCount !== 1) {
+                return;
+            }
+            $plan = Plan::find($order->plan_id);
+            $transfer = $plan && $plan->transfer_enable ? ($plan->transfer_enable . 'G') : '';
+            SendEmailJob::dispatch([
+                'email' => $user->email,
+                'subject' => admin_setting('app_name', 'XBoard') . ' - 订阅成功，欢迎使用',
+                'template_name' => 'welcomeFirstOrder',
+                'template_value' => [
+                    'name' => admin_setting('app_name', 'XBoard'),
+                    'url' => admin_setting('app_url'),
+                    'plan_name' => $plan ? $plan->name : '',
+                    'transfer' => $transfer,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error($e);
+        }
     }
 
 
