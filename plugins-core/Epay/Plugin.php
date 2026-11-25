@@ -53,6 +53,13 @@ class Plugin extends AbstractPlugin implements PaymentInterface
 
     public function pay($order): array
     {
+        // The gateway amount is the base price WITHOUT the handling fee.
+        // checkout() passes total_amount fee-inclusive (base + handling) so
+        // the order page can display the real amount the customer pays.
+        // But TY/SC add the 5% fee themselves on their side, so the gateway
+        // must receive only the base amount, otherwise the fee is charged
+        // twice. Subtract the handling fee here.
+        $gatewayAmount = ($order['total_amount'] - ($order['handling_amount'] ?? 0)) / 100;
         // Each payment attempt gets a unique out_trade_no at the gateway.
         // Xboard reuses the same order trade_no when the user switches payment
         // methods mid-order; gateways reject a repeated out_trade_no whose
@@ -64,7 +71,7 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         // with the original value.
         $outTradeNo = $order['trade_no'] . '-' . time() . mt_rand(1000, 9999);
         $params = [
-            'money' => $order['total_amount'] / 100,
+            'money' => $gatewayAmount,
             'name' => $order['trade_no'],
             'notify_url' => $order['notify_url'],
             'return_url' => $order['return_url'],

@@ -93,6 +93,7 @@ class PaymentService
             'return_url' => source_base_url('/'),
             'trade_no' => $order['trade_no'],
             'total_amount' => $order['total_amount'],
+            'handling_amount' => $order['handling_amount'] ?? 0,
             'user_id' => $order['user_id'],
             'stripe_token' => $order['stripe_token']
         ]);
