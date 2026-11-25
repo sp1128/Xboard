@@ -118,7 +118,9 @@ body.sl-ios-body {
 }
 body.sl-ios-body > div[style*="text-align:center"] {
   margin-left: 248px;
-  padding: 12px 24px 28px;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: 6px 24px 24px;
   color: var(--ios-muted);
   font-size: 12px;
 }
@@ -363,17 +365,19 @@ body.sl-ios-body > div[style*="text-align:center"] {
   transition: width 0.4s ease;
 }
 
-/* App Shell Layout (Desktop iPadOS Sidebar + Mobile Large Title + Floating Liquid Dock) */
+/* App Shell Layout (Desktop Fixed Frosted Sidebar + Mobile Large Title + Floating Liquid Dock) */
 .sl-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  padding-left: 248px;
   overflow-x: clip;
 }
 .sl-sidebar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  height: 100vh;
+  left: 0;
+  bottom: 0;
+  width: 248px;
+  z-index: 35;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -461,7 +465,7 @@ body.sl-ios-body > div[style*="text-align:center"] {
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 22px 24px 48px;
+  padding: 22px 24px 24px;
 }
 
 .sl-mobile-header { display: none; }
@@ -506,9 +510,9 @@ body.sl-ios-body > div[style*="text-align:center"] {
 @media (max-width: 767px) {
   body.sl-ios-body > div[style*="text-align:center"] {
     margin-left: 0;
-    padding: 12px 16px 104px;
+    padding: 8px 16px 104px;
   }
-  .sl-shell { grid-template-columns: minmax(0, 1fr); }
+  .sl-shell { padding-left: 0; }
   .sl-sidebar { display: none; }
   .sl-topbar { display: none; }
   .sl-view-title { display: none; }
