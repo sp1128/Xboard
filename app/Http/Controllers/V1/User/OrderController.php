@@ -172,6 +172,12 @@ class OrderController extends Controller
         if (!$order) {
             return $this->fail([400, __('Order does not exist')]);
         }
+        // 智易收 Agent 收款单的支付宝异步通知实测不推，前端轮询查状态时顺带
+        // 主动查一次支付宝，付了就立刻开通，不用等 cron（最长 3 分钟）。
+        if ($order->status === Order::STATUS_PENDING && class_exists(\Plugin\Zhiyishou\Plugin::class)) {
+            \Plugin\Zhiyishou\Plugin::syncOrder($order);
+            $order->refresh();
+        }
         return $this->success($order->status);
     }
 

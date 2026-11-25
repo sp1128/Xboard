@@ -52,6 +52,18 @@ class Plugin extends AbstractPlugin implements PaymentInterface
                 'label' => '自定义商品名称',
                 'type' => 'string',
                 'description' => '将会体现在支付宝账单中'
+            ],
+            'agent_id' => [
+                'label' => '智能体App ID',
+                'type' => 'string',
+                'required' => true,
+                'description' => '百炼智能体应用ID（alipay.aipay.trade.precreate 必传）'
+            ],
+            'agent_name' => [
+                'label' => '智能体名称',
+                'type' => 'string',
+                'required' => true,
+                'description' => '百炼智能体应用名称（alipay.aipay.trade.precreate 必传）'
             ]
         ];
     }
@@ -88,7 +100,7 @@ class Plugin extends AbstractPlugin implements PaymentInterface
 
     public function notify($params): array|bool
     {
-        if ($params['trade_status'] !== 'TRADE_SUCCESS')
+        if (($params['trade_status'] ?? '') !== 'TRADE_SUCCESS')
             return false;
 
         $gateway = new Zhiyishou();
@@ -106,6 +118,44 @@ class Plugin extends AbstractPlugin implements PaymentInterface
                 return false;
             }
         } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * 主动查单：alipay.aipay.trade.precreate 的异步通知不可靠（实测不推），
+     * 前端轮询订单状态时顺带查一次支付宝，付了就立刻开通，不用等 cron。
+     * 只对“待支付 + 智易收 + 24 小时内”的订单查，查到 TRADE_SUCCESS 即标已支付。
+     * 返回 true 表示本次把订单标成了已支付。
+     */
+    public static function syncOrder($order): bool
+    {
+        try {
+            if ($order->status !== \App\Models\Order::STATUS_PENDING)
+                return false;
+            if (time() - (int) $order->created_at > 86400)
+                return false;
+            $pay = \App\Models\Payment::where('payment', 'Zhiyishou')->first();
+            if (!$pay || (int) $order->payment_id !== (int) $pay->id)
+                return false;
+            $cfg = is_string($pay->config) ? json_decode($pay->config, true) : $pay->config;
+            $gw = new Zhiyishou();
+            $gw->setMethod('alipay.trade.query');
+            $gw->setAppId($cfg['app_id'] ?? '');
+            $gw->setPrivateKey($cfg['private_key'] ?? '');
+            $gw->setAlipayPublicKey($cfg['public_key'] ?? '');
+            $gw->setBizContent(['out_trade_no' => $order->trade_no]);
+            $gw->send();
+            $resp = $gw->getResponse();
+            if (($resp['trade_status'] ?? '') !== 'TRADE_SUCCESS')
+                return false;
+            $svc = new \App\Services\OrderService($order);
+            if (!$svc->paid($resp['trade_no'] ?? ''))
+                return false;
+            \App\Services\Plugin\HookManager::call('payment.notify.success', $order);
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('Zhiyishou syncOrder failed: ' . $e->getMessage());
             return false;
         }
     }

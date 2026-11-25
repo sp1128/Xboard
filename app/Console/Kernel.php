@@ -39,7 +39,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('reset:traffic')->everyMinute()->onOneServer()->withoutOverlapping(10);
         $schedule->command('reset:log')->daily()->onOneServer();
         // send
-        $schedule->command('send:remindMail', ['--force'])->dailyAt('11:30')->onOneServer();
+        $schedule->command('send:remindMail', ['--force'])->hourly()->onOneServer();
         // horizon metrics
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer();
         // cleanup stale online_count (GC for Redis TTL expiration)
