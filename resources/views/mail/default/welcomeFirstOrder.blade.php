@@ -17,7 +17,7 @@
     <tr><td style="background:#ffffff;border-radius:12px;border:1px solid #e4e4e7;padding:40px;">
         <table width="100%" cellpadding="0" cellspacing="0">
             <tr><td style="font-size:22px;font-weight:700;color:#18181b;padding-bottom:8px;">订阅成功，欢迎使用！</td></tr>
-            <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:8px;">您已成功订阅 <strong style="color:#18181b;">{{$plan_name}}</strong>@if($transfer)（流量 {{$transfer}}）@endif，套餐已生效。</td></tr>
+            <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:8px;">您已成功订阅 <strong style="color:#18181b;">{{$plan_name}}</strong>（流量 {{$transfer}}），套餐已生效。</td></tr>
             <tr><td style="font-size:15px;color:#52525b;line-height:1.7;padding-bottom:28px;">按下面三步操作，几分钟就能用上：</td></tr>
 
             <!-- Step 1 -->
