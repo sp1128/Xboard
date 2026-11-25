@@ -321,3 +321,99 @@ test('liquid glass dock persists across route changes without resetting lens to 
     assert.match(lens.style.transform, /60px/);
   } finally { dom.window.close(); }
 });
+
+test('knowledge base renders GFM tables, images, bare URLs, ordered list starts, dedented code blocks, and cross-doc links', async () => {
+  const { dom } = await mountSpa('#/knowledge', {
+    'user/knowledge/fetch': {
+      '新手入门': [{
+        id: 10,
+        category: '新手入门',
+        title: '快速开始：获取订阅链接',
+        updated_at: 1732500000,
+        body: [
+          '| 地区 | 月费 | 速率 |',
+          '|:---|---:|:---:|',
+          '| 日本 | ¥50 | 1Gbps |',
+          '',
+          '![IP检测示意图](https://cdn.example.test/ip.png?a=1&b=2)',
+          '',
+          '访问 https://ping0.cc/ 检查结果，或阅读 [iOS 使用教程（Shadowrocket）](#) 以及《Android 使用教程（FlClash）》。',
+          '',
+          '1. 第一步下载',
+          '',
+          '```conf',
+          '   https://blog.sp1128.top/assets/store-shadowrocket.conf',
+          '   ',
+          '```',
+          '',
+          '3. 第三步导入'
+        ].join('\n')
+      }],
+      'iOS': [{
+        id: 20,
+        category: 'iOS',
+        title: 'iOS 使用教程（Shadowrocket）',
+        updated_at: 1732500000,
+        body: '## Shadowrocket 正文'
+      }],
+      'Android': [{
+        id: 30,
+        category: 'Android',
+        title: 'Android 使用教程（FlClash）',
+        updated_at: 1732500000,
+        body: '## FlClash 正文'
+      }]
+    }
+  });
+  try {
+    const doc = dom.window.document;
+    doc.querySelector('[data-kb-id="10"]').click();
+    const sheet = doc.querySelector('.ios-sheet');
+    assert.ok(sheet.classList.contains('ios-sheet-wide'));
+    const prose = doc.querySelector('.sl-prose');
+
+    // GFM table with alignments
+    const table = prose.querySelector('.sl-table-wrap table');
+    assert.ok(table);
+    assert.equal(table.querySelectorAll('thead th').length, 3);
+    assert.equal(table.querySelectorAll('tbody td').length, 3);
+    assert.match(table.querySelectorAll('thead th')[1].getAttribute('style') || '', /text-align:\s*right/);
+    assert.match(table.querySelectorAll('thead th')[2].getAttribute('style') || '', /text-align:\s*center/);
+
+    // Markdown image rendered cleanly without leftover '!' or corrupted href
+    const img = prose.querySelector('img');
+    assert.ok(img);
+    assert.equal(img.getAttribute('src'), 'https://cdn.example.test/ip.png?a=1&b=2');
+    assert.equal(img.getAttribute('alt'), 'IP检测示意图');
+    assert.doesNotMatch(prose.textContent, /!\s*\[|!https:/);
+
+    // Bare URL auto-linked cleanly
+    const autoLink = Array.from(prose.querySelectorAll('a')).find(a => a.getAttribute('href') === 'https://ping0.cc/');
+    assert.ok(autoLink);
+
+    // Dedented code block with trimmed trailing whitespace-only lines
+    const preCode = prose.querySelector('pre code');
+    assert.ok(preCode);
+    assert.equal(preCode.textContent, 'https://blog.sp1128.top/assets/store-shadowrocket.conf');
+
+    // Interrupted ordered list preserves start="3"
+    const ols = prose.querySelectorAll('ol');
+    assert.equal(ols.length, 2);
+    assert.equal(ols[0].getAttribute('start'), null);
+    assert.equal(ols[1].getAttribute('start'), '3');
+
+    // Cross-document [Title](#) opens matching article
+    const iosLink = prose.querySelector('[data-dead-doc-link="1"]');
+    assert.ok(iosLink);
+    iosLink.click();
+    assert.match(doc.querySelector('.ios-sheet-body').textContent, /Shadowrocket 正文/);
+
+    // Back to article 10 and test 《Title》 jump
+    doc.getElementById('sl-sheet-close').click();
+    doc.querySelector('[data-kb-id="10"]').click();
+    const bookJump = doc.querySelector('[data-kb-jump="30"]');
+    assert.ok(bookJump);
+    bookJump.click();
+    assert.match(doc.querySelector('.ios-sheet-body').textContent, /FlClash 正文/);
+  } finally { dom.window.close(); }
+});
