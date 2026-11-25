@@ -83,6 +83,12 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         if (!is_string($secret) || trim($secret) === '' || !is_array($params)) {
             return false;
         }
+        // EPay V1 spec: sign, sign_type and empty values do not participate
+        // in the signature. Some gateways send an empty `param=` field, and
+        // Laravel converts empty query strings to null, which would fail the
+        // type check below and break signature verification. Drop empty/null
+        // values up front so the notification verifies either way.
+        $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
         foreach ($params as $value) {
             if (!is_string($value) && !is_int($value)) {
                 return false;
@@ -103,11 +109,6 @@ class Plugin extends AbstractPlugin implements PaymentInterface
 
         $sign = $params['sign'];
         unset($params['sign'], $params['sign_type']);
-        // EPay V1 spec: sign, sign_type and empty values do not participate
-        // in the signature. Some gateways send an empty `param=` field; if we
-        // include it here but the gateway excluded it when signing, the
-        // verification fails and the payment never auto-activates.
-        $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
         ksort($params);
         $str = stripslashes(urldecode(http_build_query($params))) . $secret;
 
