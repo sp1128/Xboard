@@ -48,18 +48,30 @@ class Plugin extends AbstractPlugin implements PaymentInterface
                 'type' => 'string',
                 'description' => '支付类型，如: alipay, wxpay, qqpay 等，可自定义'
             ],
+            'fee_inclusive' => [
+                'label' => '网关金额含手续费',
+                'type' => 'string',
+                'description' => '填 1 表示传给网关的是含手续费的总价（网关不自动加费时用，如易彩）；留空表示传原价（网关自动加费时用，如天一/蔬菜）'
+            ],
         ];
     }
 
     public function pay($order): array
     {
-        // The gateway amount is the base price WITHOUT the handling fee.
         // checkout() passes total_amount fee-inclusive (base + handling) so
         // the order page can display the real amount the customer pays.
-        // But TY/SC add the 5% fee themselves on their side, so the gateway
-        // must receive only the base amount, otherwise the fee is charged
-        // twice. Subtract the handling fee here.
-        $gatewayAmount = ($order['total_amount'] - ($order['handling_amount'] ?? 0)) / 100;
+        // Whether the gateway gets the base price or the fee-inclusive total
+        // depends on the gateway: TY/SC add the fee themselves on their side,
+        // so they must receive only the base amount, otherwise the fee is
+        // charged twice. YC has no auto-add-fee setting, so it must receive
+        // the fee-inclusive total, otherwise no fee is collected at all.
+        // Controlled per payment method by the `fee_inclusive` config flag
+        // (1 = send total incl. handling, empty = send base only).
+        if (!empty($this->getConfig('fee_inclusive'))) {
+            $gatewayAmount = $order['total_amount'] / 100;
+        } else {
+            $gatewayAmount = ($order['total_amount'] - ($order['handling_amount'] ?? 0)) / 100;
+        }
         // Each payment attempt gets a unique out_trade_no at the gateway.
         // Xboard reuses the same order trade_no when the user switches payment
         // methods mid-order; gateways reject a repeated out_trade_no whose
