@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="description" content="星屿StarLink：住宅 IP 节点（日本 100 分 / 美国 97 分）+ 32 个机房 IP 节点，覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度，日常用 AI 没问题。" />
+  <meta name="description" content="星屿StarLink：住宅 IP 节点（日本 100 分 / 美国 97 分）+ 36 个机房 IP 节点，覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度，日常用 AI 没问题。" />
   <title>{{$title}} - 住宅 IP · 机房 IP 节点</title>
   <style>
     /* iOS 26 Liquid Glass 访客落地页 */
@@ -178,7 +178,7 @@
         <div>
           <span class="sl-pill">住宅 IP · 机房 IP | 9 个地区 | AI 日常可用</span>
           <h1>星屿 StarLink<br /><span>像使用原生应用一样从容。</span></h1>
-          <p class="sl-hero-desc">月付含日本、美国原生住宅 IP，另送 6 个机房 IP 节点 + 2 个优化节点；机房 IP 覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度。日常使用 ChatGPT、Claude 稳定，早晚高峰可能会卡顿；需要三网优化线路可提工单定制（另收费）。</p>
+          <p class="sl-hero-desc">月付含日本、美国原生住宅 IP，另送 10 个机房 IP 节点 + 2 个优化节点；机房 IP 覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度。日常使用 ChatGPT、Claude 稳定，早晚高峰可能会卡顿；需要三网优化线路可提工单定制（另收费）。</p>
           <div class="sl-hero-cta">
             <a class="sl-btn sl-btn-primary sl-btn-lg" href="#plans">立即选购套餐</a>
             <a class="sl-btn sl-btn-tinted sl-btn-lg" href="/#/register">注册领 1 元体验包</a>
@@ -194,7 +194,7 @@
             </div>
             <div class="sl-widget">
               <div class="sl-widget-label"><span>机房覆盖</span></div>
-              <div class="sl-widget-val">32<small>节点</small></div>
+              <div class="sl-widget-val">36<small>节点</small></div>
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@
           <div class="sl-wallet">
             <div class="sl-wallet-top"><span>星屿 StarLink · 订阅通行证</span><span>2026-11-19 实测</span></div>
             <div class="sl-wallet-title">日常相伴 · 住宅月付</div>
-            <div class="sl-wallet-sub">含 JP / US 原生住宅 IP + 8 个附赠节点</div>
+            <div class="sl-wallet-sub">含 JP / US 原生住宅 IP + 12 个附赠节点</div>
             <div class="sl-wallet-bar"><i></i></div>
             <div class="sl-wallet-foot"><span>已用 48.2 GB</span><span>总计 200 GB</span></div>
           </div>
@@ -253,7 +253,7 @@
         <div class="sl-grid2">
           <div class="sl-card">
             <h3>住宅 IP + 机房 IP 混合覆盖</h3>
-            <p>日本（100 分）与美国（97 分）原生住宅 IP，月付另附赠 6 个机房节点与 2 个 Kamatera 优化节点；机房节点共有 32 个可选。</p>
+            <p>日本（100 分）与美国（97 分）原生住宅 IP，月付另附赠 10 个机房节点与 2 个 Kamatera 优化节点；机房节点共有 36 个可选。</p>
             <div class="sl-regions">
               <span>🇯🇵 日本</span><span>🇺🇸 美国</span><span>🇸🇬 新加坡</span><span>🇭🇰 香港</span><span>🇹🇼 台湾</span><span>🇩🇪 德国</span><span>🇨🇦 加拿大</span><span>🇬🇧 英国</span><span>🇮🇳 印度</span>
             </div>
