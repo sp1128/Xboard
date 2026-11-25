@@ -114,6 +114,13 @@ body.sl-ios-body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: clip;
+}
+body.sl-ios-body > div[style*="text-align:center"] {
+  margin-left: 248px;
+  padding: 12px 24px 28px;
+  color: var(--ios-muted);
+  font-size: 12px;
 }
 
 .sl-tabular { font-variant-numeric: tabular-nums; }
@@ -154,8 +161,25 @@ body.sl-ios-body {
   background: var(--ios-surface);
   border-radius: 18px;
   box-shadow: var(--ios-shadow);
+  min-width: 0;
 }
 .ios-card-pad { padding: 18px 20px; }
+
+.sl-stack-col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  min-width: 0;
+}
+
+.sl-notice-summary {
+  font-size: 12.5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
 
 .ios-group {
   background: var(--ios-surface);
@@ -344,6 +368,7 @@ body.sl-ios-body {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
+  overflow-x: clip;
 }
 .sl-sidebar {
   position: sticky;
@@ -415,6 +440,7 @@ body.sl-ios-body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow-x: clip;
 }
 .sl-topbar {
   position: sticky;
@@ -446,6 +472,7 @@ body.sl-ios-body {
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
 }
+.sl-bento > *, .sl-grid-2 > *, .sl-grid-3 > *, .sl-grid-4 > * { min-width: 0; }
 .sl-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .sl-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .sl-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -477,9 +504,14 @@ body.sl-ios-body {
 }
 
 @media (max-width: 767px) {
-  .sl-shell { grid-template-columns: 1fr; }
+  body.sl-ios-body > div[style*="text-align:center"] {
+    margin-left: 0;
+    padding: 12px 16px 104px;
+  }
+  .sl-shell { grid-template-columns: minmax(0, 1fr); }
   .sl-sidebar { display: none; }
   .sl-topbar { display: none; }
+  .sl-view-title { display: none; }
   .sl-mobile-header {
     display: flex;
     align-items: center;
@@ -494,8 +526,16 @@ body.sl-ios-body {
     line-height: 1.15;
   }
   .sl-content { padding: 8px 16px 116px; }
-  .sl-bento, .sl-grid-2, .sl-grid-3 { grid-template-columns: 1fr; }
+  .sl-bento, .sl-grid-2, .sl-grid-3 { grid-template-columns: minmax(0, 1fr); }
   .sl-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Lift third-party Chatwoot launcher above floating Liquid Glass dock */
+  .woot-widget-bubble,
+  .woot--bubble-holder {
+    bottom: 92px !important;
+    right: 14px !important;
+    z-index: 43 !important;
+  }
 
   .sl-dock-fade {
     display: block;
@@ -710,8 +750,22 @@ body.sl-ios-body {
 
 /* Knowledge Article Prose */
 .sl-prose { font-size: 14.5px; line-height: 1.75; color: var(--ios-text); }
-.sl-prose h1, .sl-prose h2, .sl-prose h3 { margin: 16px 0 8px; font-weight: 700; }
+.sl-prose h1, .sl-prose h2, .sl-prose h3, .sl-prose h4 { margin: 16px 0 8px; font-weight: 700; line-height: 1.35; }
+.sl-prose h1 { font-size: 20px; }
+.sl-prose h2 { font-size: 17.5px; }
+.sl-prose h3 { font-size: 15.5px; }
 .sl-prose p { margin: 8px 0; color: var(--ios-muted); }
+.sl-prose ul, .sl-prose ol { margin: 8px 0; padding-left: 20px; color: var(--ios-muted); }
+.sl-prose li { margin: 4px 0; }
+.sl-prose blockquote {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--ios-accent);
+  background: var(--ios-fill-2);
+  border-radius: 0 12px 12px 0;
+  color: var(--ios-muted);
+}
+.sl-prose hr { border: 0; border-top: 0.5px solid var(--ios-line); margin: 14px 0; }
 .sl-prose pre, .sl-prose code {
   background: var(--ios-fill);
   padding: 2px 6px;
@@ -720,5 +774,7 @@ body.sl-ios-body {
   overflow-x: auto;
 }
 .sl-prose pre { padding: 12px; display: block; }
-.sl-prose a { color: var(--ios-accent); }
+.sl-prose pre code { background: transparent; padding: 0; }
+.sl-prose a { color: var(--ios-accent); text-decoration: none; }
+.sl-prose a:hover { text-decoration: underline; }
 .sl-prose img { max-width: 100%; border-radius: 12px; }

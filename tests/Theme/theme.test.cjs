@@ -150,8 +150,8 @@ test('guest hash navigation boots the iOS SPA once without faking a login cookie
     assert.equal(app.previousElementSibling.id, 'sl-landing');
     assert.ok(app.compareDocumentPosition(footer) & window.Node.DOCUMENT_POSITION_FOLLOWING);
     const loadedScripts = [...window.document.querySelectorAll('script[src]')].map(s => s.getAttribute('src'));
-    assert.ok(loadedScripts.some(src => src.endsWith('/ios-qr.js')));
-    assert.ok(loadedScripts.some(src => src.endsWith('/ios-app.js')));
+    assert.ok(loadedScripts.some(src => src.includes('/ios-qr.js')));
+    assert.ok(loadedScripts.some(src => src.includes('/ios-app.js')));
     assert.equal(window.document.querySelector('#sl-landing').style.display, 'none');
     assert.equal(window.document.body.classList.contains('sl-landing-page'), false);
     assert.doesNotMatch(window.document.cookie, /sl_logged_in=1/);
@@ -203,4 +203,51 @@ test('iOS QR generator outputs valid inline SVG without external dependencies', 
   assert.match(svg, /^<svg[^>]+width="180"/);
   assert.match(svg, /<path d="M/);
   window.close();
+});
+
+test('knowledge base renders Markdown safely and profile formats ISO session timestamps', async () => {
+  const { dom } = await mountSpa('#/knowledge', {
+    'user/knowledge/fetch': {
+      '开始使用': [{
+        id: 1,
+        category: '开始使用',
+        title: '快速开始',
+        updated_at: 1732500000,
+        body: '## 快速开始\n\n> 请先登录 **仪表盘**\n\n- 点击 [教程](#)\n- 运行 `<script>alert(1)</script>`'
+      }]
+    }
+  });
+  try {
+    const doc = dom.window.document;
+    doc.querySelector('[data-kb-id="1"]').click();
+    const prose = doc.querySelector('.sl-prose');
+    assert.ok(prose);
+    assert.ok(prose.querySelector('h2'));
+    assert.ok(prose.querySelector('blockquote'));
+    assert.ok(prose.querySelector('strong'));
+    assert.equal(prose.querySelectorAll('script').length, 0);
+    assert.ok(prose.querySelector('[data-dead-doc-link="1"]'));
+    dom.window.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape' }));
+    assert.equal(doc.getElementById('sl-sheet-backdrop'), null);
+  } finally { dom.window.close(); }
+});
+
+test('dashboard export uses same-origin HTTPS path when subscribe_url is plain HTTP', async () => {
+  const { dom, calls } = await mountSpa('#/dashboard', {
+    'user/getSubscribe': { plan_id: 1, plan: { name: '月付' }, u: 0, d: 0, transfer_enable: 100 * GB, subscribe_url: 'http://8.138.59.73:8089/s/token123' },
+    'user/info': { email: 'u@test.com', balance: 0, commission_balance: 0 },
+    'user/invite/fetch': { codes: [], stat: [0, 0, 0, 10, 0] },
+    'user/notice/fetch': [{ id: 1, title: '公告', content: '很长一段公告内容'.repeat(20), updated_at: 1732500000 }],
+    'user/server/fetch': [],
+    'user/comm/config': { currency_symbol: '¥' },
+    'user/getStat': [0, 0, 0]
+  });
+  try {
+    const doc = dom.window.document;
+    assert.ok(doc.querySelector('.sl-stack-col'));
+    assert.ok(doc.querySelector('.sl-notice-summary'));
+    doc.querySelector('[data-action="export-yaml"]').click();
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.ok(calls.some(c => String(c[0]).startsWith('https://example.test/s/token123?flag=meta')));
+  } finally { dom.window.close(); }
 });

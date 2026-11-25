@@ -138,12 +138,90 @@
 
   function fmtDate(ts, withTime) {
     if (!ts) return '长期有效';
-    var ms = Number(ts) > 1e12 ? Number(ts) : Number(ts) * 1000;
-    var d = new Date(ms);
+    var d;
+    if (typeof ts === 'string' && !/^\d+(\.\d+)?$/.test(ts.trim())) {
+      d = new Date(ts);
+    } else {
+      var ms = Number(ts) > 1e12 ? Number(ts) : Number(ts) * 1000;
+      d = new Date(ms);
+    }
     if (isNaN(d.getTime())) return '-';
     var p = function (v) { return ('0' + v).slice(-2); };
     var date = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
     return withTime ? date + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) : date;
+  }
+
+  function renderMarkdown(raw) {
+    var text = String(raw || '').replace(/\r\n?/g, '\n');
+    if (/^\s*<(?:h[1-6]|p|div|ul|ol|table|blockquote)\b/i.test(text)) {
+      return sanitizeHtml(text);
+    }
+    var codeBlocks = [];
+    text = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, function (_, lang, code) {
+      var idx = codeBlocks.length;
+      codeBlocks.push('<pre><code>' + esc(code.replace(/\n$/, '')) + '</code></pre>');
+      return '\x00CODEBLOCK' + idx + '\x00';
+    });
+
+    function inlineMd(s) {
+      var out = esc(s);
+      out = out.replace(/`([^`\n]+)`/g, function (_, c) { return '<code>' + c + '</code>'; });
+      out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (_, label, href) {
+        var cleanHref = href.replace(/&amp;/g, '&').trim();
+        if (/^javascript:/i.test(cleanHref)) return label;
+        if (cleanHref === '#' || cleanHref === '') {
+          return '<a href="#/knowledge" data-dead-doc-link="1">' + label + '</a>';
+        }
+        return '<a href="' + esc(cleanHref) + '" target="_blank" rel="noopener">' + label + '</a>';
+      });
+      out = out.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+      out = out.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      return out;
+    }
+
+    var lines = text.split('\n');
+    var html = [];
+    var listType = null;
+    function closeList() {
+      if (listType) { html.push('</' + listType + '>'); listType = null; }
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var trim = line.trim();
+      if (!trim) { closeList(); continue; }
+      var cbMatch = trim.match(/^\x00CODEBLOCK(\d+)\x00$/);
+      if (cbMatch) { closeList(); html.push(codeBlocks[Number(cbMatch[1])]); continue; }
+      var hMatch = trim.match(/^(#{1,4})\s+(.+)$/);
+      if (hMatch) {
+        closeList();
+        var lvl = hMatch[1].length;
+        html.push('<h' + lvl + '>' + inlineMd(hMatch[2]) + '</h' + lvl + '>');
+        continue;
+      }
+      if (/^---+$/.test(trim)) { closeList(); html.push('<hr />'); continue; }
+      if (/^>\s?/.test(trim)) {
+        closeList();
+        html.push('<blockquote>' + inlineMd(trim.replace(/^>\s?/, '')) + '</blockquote>');
+        continue;
+      }
+      var ulMatch = trim.match(/^[-*]\s+(.+)$/);
+      if (ulMatch) {
+        if (listType !== 'ul') { closeList(); listType = 'ul'; html.push('<ul>'); }
+        html.push('<li>' + inlineMd(ulMatch[1]) + '</li>');
+        continue;
+      }
+      var olMatch = trim.match(/^\d+\.\s+(.+)$/);
+      if (olMatch) {
+        if (listType !== 'ol') { closeList(); listType = 'ol'; html.push('<ol>'); }
+        html.push('<li>' + inlineMd(olMatch[1]) + '</li>');
+        continue;
+      }
+      closeList();
+      html.push('<p>' + inlineMd(trim) + '</p>');
+    }
+    closeList();
+    return html.join('');
   }
 
   function flagOf(name) {
@@ -250,6 +328,10 @@
     setTimeout(function () { item.remove(); }, 2800);
   }
 
+  function onSheetKeydown(e) {
+    if (e.key === 'Escape') closeSheet();
+  }
+
   function openSheet(title, bodyHtml, onMount) {
     closeSheet();
     var backdrop = document.createElement('div');
@@ -268,11 +350,13 @@
       if (e.target === backdrop) closeSheet();
     });
     backdrop.querySelector('#sl-sheet-close').addEventListener('click', closeSheet);
+    window.addEventListener('keydown', onSheetKeydown);
     if (typeof onMount === 'function') onMount(backdrop);
   }
 
   function closeSheet() {
     if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+    window.removeEventListener('keydown', onSheetKeydown);
     var el = document.getElementById('sl-sheet-backdrop');
     if (el) el.remove();
   }
@@ -369,9 +453,11 @@
   }
 
   /* -------------------- Data Loaders -------------------- */
+  var dashboardInFlight = null;
   function loadDashboardData(force) {
     if (!force && state.sub) return Promise.resolve();
-    return Promise.all([
+    if (!force && dashboardInFlight) return dashboardInFlight;
+    dashboardInFlight = Promise.all([
       api('user/getSubscribe').then(function (r) { state.sub = r.data; }),
       api('user/info').then(function (r) { state.info = r.data; }).catch(function () {}),
       api('user/invite/fetch').then(function (r) { state.invite = r.data; }).catch(function () {}),
@@ -379,7 +465,10 @@
       api('user/server/fetch').then(function (r) { state.servers = Array.isArray(r.data) ? r.data : []; }).catch(function () {}),
       api('user/comm/config').then(function (r) { state.userConfig = r.data; }).catch(function () {}),
       api('user/getStat').then(function (r) { state.stat = r.data; }).catch(function () {})
-    ]);
+    ]).finally(function () {
+      dashboardInFlight = null;
+    });
+    return dashboardInFlight;
   }
 
   function loadRouteData(route) {
@@ -426,6 +515,19 @@
   }
 
   /* -------------------- Actions & Sheets -------------------- */
+  function resolveSubscribeFetchUrl(subUrl) {
+    var baseUrl = String(subUrl || '').trim();
+    if (!baseUrl) return '';
+    try {
+      var parsed = new URL(baseUrl, location.origin);
+      // Avoid Mixed Content or cross-origin blocks when subscribe_url uses http:// or another origin
+      if ((location.protocol === 'https:' && parsed.protocol === 'http:') || parsed.origin !== location.origin) {
+        baseUrl = location.origin + parsed.pathname + parsed.search;
+      }
+    } catch (e) {}
+    return baseUrl + (baseUrl.indexOf('?') === -1 ? '?flag=meta' : '&flag=meta');
+  }
+
   function exportClashConfig() {
     var subUrl = state.sub && state.sub.subscribe_url;
     if (!subUrl) {
@@ -436,7 +538,7 @@
       }).catch(function (e) { toast(e.message, true); });
       return;
     }
-    var dlUrl = subUrl + (subUrl.indexOf('?') === -1 ? '?flag=meta' : '&flag=meta');
+    var dlUrl = resolveSubscribeFetchUrl(subUrl);
     fetch(dlUrl).then(function (r) {
       if (!r.ok) throw new Error('配置文件获取失败');
       return r.text();
@@ -900,8 +1002,16 @@
     var html =
       '<div style="font-size:18px;font-weight:700;margin-bottom:6px">' + esc(article.title) + '</div>' +
       '<div class="sl-muted" style="font-size:12px;margin-bottom:14px">' + esc(article.category || '文档') + ' · 更新于 ' + fmtDate(article.updated_at, false) + '</div>' +
-      '<div class="sl-prose">' + sanitizeHtml(article.body || '') + '</div>';
-    openSheet('使用文档', html);
+      '<div class="sl-prose">' + renderMarkdown(article.body || '') + '</div>';
+    openSheet('使用文档', html, function (root) {
+      root.querySelectorAll('[data-dead-doc-link]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          toast('请在文档列表中选择对应客户端教程');
+          closeSheet();
+        });
+      });
+    });
   }
 
   /* -------------------- View Renderers -------------------- */
@@ -967,13 +1077,13 @@
     var servers = Array.isArray(state.servers) ? state.servers.slice(0, 4) : [];
 
     return (
-      '<div style="display:grid;gap:18px">' +
+      '<div class="sl-stack-col">' +
         (notice ?
           '<div class="ios-card ios-card-pad ios-row-clickable" data-action="open-notice" style="display:flex;align-items:center;gap:14px;cursor:pointer">' +
             '<div class="ios-badge-icon" style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--ios-accent),var(--ios-indigo))">📢</div>' +
             '<div style="flex:1;min-width:0">' +
               '<div style="font-size:14px;font-weight:700">' + esc(notice.title) + '</div>' +
-              '<div class="sl-muted" style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(plainText(notice.content)) + '</div>' +
+              '<div class="sl-muted sl-notice-summary">' + esc(plainText(notice.content)) + '</div>' +
             '</div>' +
             '<span class="ios-btn ios-btn-tinted ios-btn-sm">查看</span>' +
           '</div>' : '') +
@@ -1108,9 +1218,9 @@
       return true;
     });
     return (
-      '<div style="display:grid;gap:18px">' +
+      '<div class="sl-stack-col">' +
         '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px">' +
-          '<div><h2 style="margin:0;font-size:22px;font-weight:700">订阅商店</h2><div class="sl-muted" style="font-size:13px">选择适合你的流量与节点方案</div></div>' +
+          '<div><h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">订阅商店</h2><div class="sl-muted" style="font-size:13px">选择适合你的流量与节点方案</div></div>' +
           '<div class="ios-seg">' +
             '<button type="button" data-plan-filter="all" class="' + (state.planFilter === 'all' ? 'is-active' : '') + '">全部</button>' +
             '<button type="button" data-plan-filter="monthly" class="' + (state.planFilter === 'monthly' ? 'is-active' : '') + '">月付</button>' +
@@ -1142,7 +1252,7 @@
     );
   }
 
-  function renderNodes() {
+  function renderNodeListItems() {
     var list = Array.isArray(state.servers) ? state.servers : [];
     var q = state.nodeSearch.trim().toLowerCase();
     var filtered = list.filter(function (s) {
@@ -1151,11 +1261,26 @@
       if (q && String(s.name || '').toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
+    return filtered.length ? filtered.map(function (s) {
+      var tags = Array.isArray(s.tags) && s.tags.length ? ' · ' + s.tags.join(' / ') : '';
+      return '<div class="ios-row">' +
+        '<span style="font-size:22px">' + flagOf(s.name) + '</span>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:14.5px;font-weight:600">' + esc(s.name) + '</div>' +
+          '<div class="sl-muted" style="font-size:12px">' + esc(String(s.type || '').toUpperCase()) + ' · ' + esc(s.rate || '1.0') + 'x 倍率' + esc(tags) + '</div>' +
+        '</div>' +
+        '<span class="ios-pill ' + (s.is_online ? 'ios-pill-green' : 'ios-pill-red') + '">' + (s.is_online ? '● 在线' : '● 离线') + '</span>' +
+      '</div>';
+    }).join('') : '<div class="ios-row no-inset"><span class="sl-muted">暂无匹配的节点（未订阅或订阅已过期时节点列表为空）</span></div>';
+  }
+
+  function renderNodes() {
+    var list = Array.isArray(state.servers) ? state.servers : [];
     var onlineCount = list.filter(function (s) { return s.is_online; }).length;
     return (
-      '<div style="display:grid;gap:16px">' +
+      '<div class="sl-stack-col">' +
         '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px">' +
-          '<div><h2 style="margin:0;font-size:22px;font-weight:700">节点状态</h2><div class="sl-muted" style="font-size:13px">共 ' + list.length + ' 个节点 · ' + onlineCount + ' 个在线</div></div>' +
+          '<div><h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">节点状态</h2><div class="sl-muted" style="font-size:13px">共 ' + list.length + ' 个节点 · ' + onlineCount + ' 个在线</div></div>' +
           '<div class="ios-seg">' +
             '<button type="button" data-node-filter="all" class="' + (state.nodeFilter === 'all' ? 'is-active' : '') + '">全部</button>' +
             '<button type="button" data-node-filter="online" class="' + (state.nodeFilter === 'online' ? 'is-active' : '') + '">在线</button>' +
@@ -1163,19 +1288,7 @@
           '</div>' +
         '</div>' +
         '<input id="sl-node-search" class="ios-field-box" placeholder="搜索节点地区或名称..." value="' + esc(state.nodeSearch) + '" />' +
-        '<div class="ios-group">' +
-          (filtered.length ? filtered.map(function (s) {
-            var tags = Array.isArray(s.tags) && s.tags.length ? ' · ' + s.tags.join(' / ') : '';
-            return '<div class="ios-row">' +
-              '<span style="font-size:22px">' + flagOf(s.name) + '</span>' +
-              '<div style="flex:1;min-width:0">' +
-                '<div style="font-size:14.5px;font-weight:600">' + esc(s.name) + '</div>' +
-                '<div class="sl-muted" style="font-size:12px">' + esc(String(s.type || '').toUpperCase()) + ' · ' + esc(s.rate || '1.0') + 'x 倍率' + esc(tags) + '</div>' +
-              '</div>' +
-              '<span class="ios-pill ' + (s.is_online ? 'ios-pill-green' : 'ios-pill-red') + '">' + (s.is_online ? '● 在线' : '● 离线') + '</span>' +
-            '</div>';
-          }).join('') : '<div class="ios-row no-inset"><span class="sl-muted">暂无匹配的节点（未订阅或订阅已过期时节点列表为空）</span></div>') +
-        '</div>' +
+        '<div id="sl-node-list" class="ios-group">' + renderNodeListItems() + '</div>' +
       '</div>'
     );
   }
@@ -1183,10 +1296,10 @@
   function renderOrders() {
     var list = Array.isArray(state.orders) ? state.orders : [];
     return (
-      '<div style="display:grid;gap:16px">' +
+      '<div class="sl-stack-col">' +
         '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<h2 style="margin:0;font-size:22px;font-weight:700">我的订单</h2>' +
-          '<a href="#/profile" class="ios-btn ios-btn-gray ios-btn-sm">返回</a>' +
+          '<h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">我的订单</h2>' +
+          '<button type="button" data-action="go-back" class="ios-btn ios-btn-gray ios-btn-sm">返回</button>' +
         '</div>' +
         '<div class="ios-group">' +
           (list.length ? list.map(function (o) {
@@ -1211,9 +1324,9 @@
   function renderTickets() {
     var list = Array.isArray(state.tickets) ? state.tickets : [];
     return (
-      '<div style="display:grid;gap:16px">' +
+      '<div class="sl-stack-col">' +
         '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<div><h2 style="margin:0;font-size:22px;font-weight:700">我的工单</h2><div class="sl-muted" style="font-size:13px">技术支持与三网优化线路定制</div></div>' +
+          '<div><h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">我的工单</h2><div class="sl-muted" style="font-size:13px">技术支持与三网优化线路定制</div></div>' +
           '<button type="button" id="sl-new-ticket" class="ios-btn ios-btn-primary ios-btn-sm">＋ 新建工单</button>' +
         '</div>' +
         '<div class="ios-group">' +
@@ -1243,9 +1356,9 @@
     var origin = location.origin || '';
 
     return (
-      '<div style="display:grid;gap:18px">' +
+      '<div class="sl-stack-col">' +
         '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<h2 style="margin:0;font-size:22px;font-weight:700">我的邀请与佣金</h2>' +
+          '<h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">我的邀请与佣金</h2>' +
           '<button type="button" id="sl-gen-invite" class="ios-btn ios-btn-primary ios-btn-sm">＋ 生成邀请码</button>' +
         '</div>' +
         '<div class="sl-grid-3">' +
@@ -1255,9 +1368,9 @@
         '</div>' +
         '<div><div class="ios-section-title">专属邀请码（点击复制邀请链接）</div><div class="ios-group">' +
           (codes.length ? codes.map(function (c) {
-            var link = origin + '/?code=' + encodeURIComponent(c.code) + '#/register?code=' + encodeURIComponent(c.code);
+            var link = origin + '/#/register?code=' + encodeURIComponent(c.code);
             return '<div class="ios-row ios-row-clickable no-inset" data-copy="' + esc(link) + '">' +
-              '<div style="flex:1"><strong class="sl-tabular" style="font-size:15px">' + esc(c.code) + '</strong><div class="sl-muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(link) + '</div></div>' +
+              '<div style="flex:1;min-width:0"><strong class="sl-tabular" style="font-size:15px">' + esc(c.code) + '</strong><div class="sl-muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(link) + '</div></div>' +
               '<span class="ios-btn ios-btn-tinted ios-btn-sm">复制链接</span>' +
             '</div>';
           }).join('') : '<div class="ios-row no-inset"><span class="sl-muted">暂无邀请码，请点击右上角生成</span></div>') +
@@ -1274,10 +1387,10 @@
   function renderTraffic() {
     var list = Array.isArray(state.trafficLogs) ? state.trafficLogs : [];
     return (
-      '<div style="display:grid;gap:16px">' +
+      '<div class="sl-stack-col">' +
         '<div style="display:flex;justify-content:space-between;align-items:center">' +
-          '<h2 style="margin:0;font-size:22px;font-weight:700">本月流量明细</h2>' +
-          '<a href="#/dashboard" class="ios-btn ios-btn-gray ios-btn-sm">返回</a>' +
+          '<h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">本月流量明细</h2>' +
+          '<button type="button" data-action="go-back" class="ios-btn ios-btn-gray ios-btn-sm">返回</button>' +
         '</div>' +
         '<div class="ios-group">' +
           (list.length ? list.map(function (l) {
@@ -1292,28 +1405,33 @@
     );
   }
 
-  function renderKnowledge() {
+  function renderKnowledgeListItems() {
     var groups = state.knowledge && typeof state.knowledge === 'object' ? state.knowledge : {};
     var q = state.knowledgeSearch.trim().toLowerCase();
     var cats = Object.keys(groups);
+    var blocks = cats.map(function (cat) {
+      var items = (groups[cat] || []).filter(function (a) {
+        return !q || String(a.title || '').toLowerCase().indexOf(q) !== -1;
+      });
+      if (!items.length) return '';
+      return '<div><div class="ios-section-title">' + esc(cat) + '</div><div class="ios-group">' +
+        items.map(function (a) {
+          return '<div class="ios-row ios-row-clickable no-inset" data-kb-id="' + esc(a.id) + '">' +
+            '<div style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600">' + esc(a.title) + '</div><div class="sl-muted" style="font-size:12px">更新于 ' + fmtDate(a.updated_at, false) + '</div></div>' +
+            '<span class="sl-faint">›</span>' +
+          '</div>';
+        }).join('') +
+      '</div></div>';
+    }).filter(Boolean);
+    return blocks.length ? blocks.join('') : '<div class="ios-card ios-card-pad sl-muted" style="text-align:center">暂无匹配的使用文档</div>';
+  }
+
+  function renderKnowledge() {
     return (
-      '<div style="display:grid;gap:16px">' +
-        '<div><h2 style="margin:0;font-size:22px;font-weight:700">使用文档</h2><div class="sl-muted" style="font-size:13px">客户端下载、导入步骤与常见问题</div></div>' +
+      '<div class="sl-stack-col">' +
+        '<div><h2 class="sl-view-title" style="margin:0;font-size:22px;font-weight:700">使用文档</h2><div class="sl-muted" style="font-size:13px">客户端下载、导入步骤与常见问题</div></div>' +
         '<input id="sl-kb-search" class="ios-field-box" placeholder="搜索文档关键字..." value="' + esc(state.knowledgeSearch) + '" />' +
-        (cats.length ? cats.map(function (cat) {
-          var items = (groups[cat] || []).filter(function (a) {
-            return !q || String(a.title || '').toLowerCase().indexOf(q) !== -1;
-          });
-          if (!items.length) return '';
-          return '<div><div class="ios-section-title">' + esc(cat) + '</div><div class="ios-group">' +
-            items.map(function (a) {
-              return '<div class="ios-row ios-row-clickable no-inset" data-kb-id="' + esc(a.id) + '">' +
-                '<div style="flex:1"><div style="font-size:14.5px;font-weight:600">' + esc(a.title) + '</div><div class="sl-muted" style="font-size:12px">更新于 ' + fmtDate(a.updated_at, false) + '</div></div>' +
-                '<span class="sl-faint">›</span>' +
-              '</div>';
-            }).join('') +
-          '</div></div>';
-        }).join('') : '<div class="ios-card ios-card-pad sl-muted" style="text-align:center">暂无使用文档</div>') +
+        '<div id="sl-kb-list" class="sl-stack-col">' + renderKnowledgeListItems() + '</div>' +
       '</div>'
     );
   }
@@ -1325,7 +1443,7 @@
     var sessions = Array.isArray(state.sessions) ? state.sessions : [];
 
     return (
-      '<div style="display:grid;gap:18px">' +
+      '<div class="sl-stack-col">' +
         // Account Header Card
         '<div class="ios-card ios-card-pad" style="display:flex;align-items:center;gap:14px">' +
           '<div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--ios-accent),var(--ios-purple));color:#fff;display:grid;place-items:center;font-size:20px;font-weight:700;flex:none">' + esc((info.email || 'S').charAt(0).toUpperCase()) + '</div>' +
@@ -1382,7 +1500,7 @@
 
         (sessions.length ? '<div><div class="ios-section-title">当前活跃会话 (' + sessions.length + ')</div><div class="ios-group">' +
           sessions.slice(0, 5).map(function (sess) {
-            return '<div class="ios-row no-inset"><div style="flex:1"><div style="font-size:13.5px;font-weight:600">登录设备 #' + esc(sess.id) + '</div><div class="sl-muted" style="font-size:11.5px">最近使用 ' + esc(sess.last_used_at || sess.created_at || '-') + '</div></div></div>';
+            return '<div class="ios-row no-inset"><div style="flex:1"><div style="font-size:13.5px;font-weight:600">登录设备 #' + esc(sess.id) + '</div><div class="sl-muted" style="font-size:11.5px">最近使用 ' + esc(fmtDate(sess.last_used_at || sess.created_at, true)) + '</div></div></div>';
           }).join('') +
         '</div></div>' : '') +
       '</div>'
@@ -1392,7 +1510,7 @@
   /* -------------------- Shell & Liquid Glass Draggable Dock -------------------- */
   function pageTitle(route) {
     var map = {
-      dashboard: '星屿',
+      dashboard: '仪表盘',
       plan: '订阅商店',
       node: '节点状态',
       order: '我的订单',
@@ -1682,6 +1800,13 @@
       el.addEventListener('click', function () { copyText(el.getAttribute('data-copy')); });
     });
 
+    document.querySelectorAll('[data-action="go-back"]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        if (history.length > 1) history.back();
+        else navigate('dashboard');
+      });
+    });
+
     // Plans
     document.querySelectorAll('[data-plan-filter]').forEach(function (b) {
       b.addEventListener('click', function () { state.planFilter = b.getAttribute('data-plan-filter'); render(); });
@@ -1702,9 +1827,8 @@
     if (nodeSearch) {
       nodeSearch.addEventListener('input', function () {
         state.nodeSearch = nodeSearch.value;
-        render();
-        var el = document.getElementById('sl-node-search');
-        if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+        var listEl = document.getElementById('sl-node-list');
+        if (listEl) listEl.innerHTML = renderNodeListItems();
       });
     }
 
@@ -1772,27 +1896,32 @@
     }
 
     // Knowledge
+    function bindKnowledgeItems() {
+      document.querySelectorAll('[data-kb-id]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var id = Number(el.getAttribute('data-kb-id'));
+          var groups = state.knowledge || {};
+          var found = null;
+          Object.keys(groups).some(function (k) {
+            found = (groups[k] || []).find(function (a) { return Number(a.id) === id; });
+            return !!found;
+          });
+          if (found) openKnowledgeSheet(found);
+        });
+      });
+    }
     var kbSearch = document.getElementById('sl-kb-search');
     if (kbSearch) {
       kbSearch.addEventListener('input', function () {
         state.knowledgeSearch = kbSearch.value;
-        render();
-        var el = document.getElementById('sl-kb-search');
-        if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+        var listEl = document.getElementById('sl-kb-list');
+        if (listEl) {
+          listEl.innerHTML = renderKnowledgeListItems();
+          bindKnowledgeItems();
+        }
       });
     }
-    document.querySelectorAll('[data-kb-id]').forEach(function (el) {
-      el.addEventListener('click', function () {
-        var id = Number(el.getAttribute('data-kb-id'));
-        var groups = state.knowledge || {};
-        var found = null;
-        Object.keys(groups).some(function (k) {
-          found = (groups[k] || []).find(function (a) { return Number(a.id) === id; });
-          return !!found;
-        });
-        if (found) openKnowledgeSheet(found);
-      });
-    });
+    bindKnowledgeItems();
 
     // Profile
     var giftBtn = document.getElementById('sl-gift-btn');

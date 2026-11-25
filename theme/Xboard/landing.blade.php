@@ -387,9 +387,10 @@
       var landing = document.getElementById('sl-landing');
       if(landing) landing.style.display = 'none';
       document.body.classList.remove('sl-landing-page');
+      var ver = encodeURIComponent((window.settings && window.settings.version) || '1');
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = '/theme/{{$theme}}/assets/ios-app.css';
+      link.href = '/theme/{{$theme}}/assets/ios-app.css?v=' + ver;
       document.head.appendChild(link);
       var app = document.createElement('div');
       app.id = 'app';
@@ -397,11 +398,11 @@
       else document.body.appendChild(app);
       var qr = document.createElement('script');
       qr.async = false;
-      qr.src = '/theme/{{$theme}}/assets/ios-qr.js';
+      qr.src = '/theme/{{$theme}}/assets/ios-qr.js?v=' + ver;
       document.body.appendChild(qr);
       var s = document.createElement('script');
       s.async = false;
-      s.src = '/theme/{{$theme}}/assets/ios-app.js';
+      s.src = '/theme/{{$theme}}/assets/ios-app.js?v=' + ver;
       document.body.appendChild(s);
     }
     function needsSPA(){ return !!getToken() || /^#\//.test(location.hash || ''); }

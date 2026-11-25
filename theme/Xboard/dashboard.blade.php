@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>{{$title}}</title>
-  <link rel="stylesheet" href="/theme/{{$theme}}/assets/ios-app.css" />
+  <link rel="stylesheet" href="/theme/{{$theme}}/assets/ios-app.css?v={{ urlencode($version) }}" />
 </head>
 
 <body class="sl-ios-body">
@@ -25,8 +25,8 @@
     };
   </script>
   <div id="app"></div>
-  <script src="/theme/{{$theme}}/assets/ios-qr.js"></script>
-  <script src="/theme/{{$theme}}/assets/ios-app.js"></script>
+  <script src="/theme/{{$theme}}/assets/ios-qr.js?v={{ urlencode($version) }}"></script>
+  <script src="/theme/{{$theme}}/assets/ios-app.js?v={{ urlencode($version) }}"></script>
   {!! $theme_config['custom_html'] ?? '' !!}
 </body>
 
