@@ -341,10 +341,11 @@
       '<div class="ios-sheet" role="dialog" aria-modal="true">' +
         '<div class="ios-sheet-head">' +
           '<strong style="font-size:16px">' + esc(title) + '</strong>' +
-          '<button type="button" id="sl-sheet-close" class="ios-btn ios-btn-gray ios-btn-sm">完成</button>' +
+          '<button type="button" id="sl-sheet-close" class="ios-btn ios-btn-gray ios-btn-sm">关闭</button>' +
         '</div>' +
         '<div class="ios-sheet-body">' + bodyHtml + '</div>' +
       '</div>';
+    document.body.classList.add('sl-sheet-open');
     document.body.appendChild(backdrop);
     backdrop.addEventListener('click', function (e) {
       if (e.target === backdrop) closeSheet();
@@ -357,6 +358,7 @@
   function closeSheet() {
     if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
     window.removeEventListener('keydown', onSheetKeydown);
+    document.body.classList.remove('sl-sheet-open');
     var el = document.getElementById('sl-sheet-backdrop');
     if (el) el.remove();
   }
@@ -616,6 +618,18 @@
     openSheet('系统公告', html);
   }
 
+  function renderPaymentIcon(icon) {
+    var raw = String(icon || '').trim();
+    if (!raw) return '<span class="sl-pay-icon-emoji">💳</span>';
+    if (/^(https?:\/\/|\/|data:image\/)/i.test(raw)) {
+      return '<img class="sl-pay-icon-img" src="' + esc(raw) + '" alt="" onerror="this.style.display=\'none\'" />';
+    }
+    if (/^<svg[\s>]/i.test(raw)) {
+      return '<span class="sl-pay-icon-emoji">' + sanitizeHtml(raw) + '</span>';
+    }
+    return '<span class="sl-pay-icon-emoji">' + esc(raw) + '</span>';
+  }
+
   function openPlanCheckoutSheet(plan) {
     var available = PERIODS.filter(function (p) {
       var v = plan[p[0]];
@@ -623,7 +637,10 @@
     });
     if (!available.length) { toast('该套餐暂无可用购买周期', true); return; }
     var selectedPeriod = available[0][0];
+    var couponInputVal = '';
     var couponInfo = null;
+    var couponErr = '';
+    var pendingOrders = null;
 
     function calcFinal(baseCents) {
       if (!couponInfo) return baseCents;
@@ -632,71 +649,140 @@
       return baseCents;
     }
 
-    function buildHtml() {
-      var base = Number(plan[selectedPeriod]) || 0;
-      var finalAmt = calcFinal(base);
+    function buildBodyHtml() {
+      var userBal = state.info ? Number(state.info.balance || 0) : 0;
       return (
         '<div class="ios-card ios-card-pad" style="margin-bottom:14px">' +
           '<div style="font-size:18px;font-weight:700">' + esc(plan.name) + '</div>' +
-          '<div class="sl-muted" style="font-size:12.5px;margin-top:4px">' + esc(plainText(plan.content)) + '</div>' +
-          '<div style="display:flex;gap:12px;margin-top:12px;font-size:12.5px">' +
+          '<div class="sl-prose" style="font-size:12.5px;margin-top:6px">' + renderMarkdown(plan.content || '') + '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:12.5px">' +
             '<span class="ios-pill ios-pill-blue">流量 ' + (plan.transfer_enable == null ? '不限' : esc(plan.transfer_enable) + ' GB') + '</span>' +
             '<span class="ios-pill ios-pill-gray">' + (plan.speed_limit ? esc(plan.speed_limit) + ' Mbps' : '不限速') + '</span>' +
             '<span class="ios-pill ios-pill-gray">' + (plan.device_limit ? esc(plan.device_limit) + ' 台设备' : '不限设备') + '</span>' +
           '</div>' +
         '</div>' +
         '<div class="ios-section-title">选择订阅周期</div>' +
-        '<div class="ios-group" style="margin-bottom:14px">' +
+        '<div class="sl-period-grid" style="margin-bottom:14px">' +
           available.map(function (p) {
             var active = p[0] === selectedPeriod;
-            return '<div class="ios-row ios-row-clickable no-inset" data-period="' + esc(p[0]) + '">' +
-              '<div style="flex:1;font-size:14px;font-weight:600">' + esc(p[1]) + '</div>' +
-              '<div class="sl-tabular" style="font-size:15px;font-weight:700;color:' + (active ? 'var(--ios-accent)' : 'var(--ios-text)') + '">' + money(plan[p[0]]) + '</div>' +
-              '<div style="width:20px;text-align:right;color:var(--ios-accent);font-weight:700">' + (active ? '✓' : '') + '</div>' +
-            '</div>';
+            return '<button type="button" class="sl-period-pill ' + (active ? 'is-active' : '') + '" data-period="' + esc(p[0]) + '">' +
+              '<div style="font-size:12px;color:var(--ios-muted)">' + esc(p[1]) + '</div>' +
+              '<div class="sl-tabular" style="font-size:16px;font-weight:700;margin-top:2px;color:' + (active ? 'var(--ios-accent)' : 'var(--ios-text)') + '">' + money(plan[p[0]]) + '</div>' +
+            '</button>';
           }).join('') +
         '</div>' +
         '<div class="ios-section-title">优惠券（可选）</div>' +
-        '<div style="display:flex;gap:8px;margin-bottom:16px">' +
-          '<input id="sl-coupon-input" class="ios-field-box" placeholder="输入优惠码" value="' + esc(couponInfo ? couponInfo._code : '') + '" />' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px">' +
+          '<input id="sl-coupon-input" class="ios-field-box" placeholder="输入优惠码" value="' + esc(couponInputVal) + '" />' +
           '<button type="button" id="sl-coupon-btn" class="ios-btn ios-btn-tinted">验证</button>' +
+          (couponInfo ? '<button type="button" id="sl-coupon-clear" class="ios-btn ios-btn-gray">清除</button>' : '') +
         '</div>' +
-        (couponInfo ? '<div class="ios-pill ios-pill-green" style="margin-bottom:14px">✓ 已应用优惠：' + esc(couponInfo.name || couponInfo._code) + '</div>' : '') +
-        '<div class="ios-card ios-card-pad" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">' +
-          '<span class="sl-muted" style="font-size:14px">应付金额</span>' +
-          '<strong class="sl-tabular" style="font-size:24px;color:var(--ios-accent)">' + money(finalAmt) + '</strong>' +
-        '</div>' +
-        '<button type="button" id="sl-order-submit" class="ios-btn ios-btn-primary ios-btn-block">提交订单并支付</button>'
+        (couponErr ? '<div style="font-size:12px;color:var(--ios-red);margin-bottom:10px;padding-left:4px">' + esc(couponErr) + '</div>' : '') +
+        (couponInfo ? '<div class="ios-pill ios-pill-green" style="margin-bottom:12px">✓ 已应用优惠：' + esc(couponInfo.name || couponInfo._code) + '</div>' : '') +
+        (userBal > 0 ? '<div class="sl-muted" style="font-size:12px;padding-left:4px">当前账户余额 ' + money(userBal) + '，下单时将自动抵扣</div>' : '') +
+        (pendingOrders && pendingOrders.length ?
+          '<div class="ios-card ios-card-pad" style="margin-top:12px;border:1px solid var(--ios-orange)">' +
+            '<div style="font-size:13.5px;font-weight:700;color:var(--ios-orange)">存在未付款订单</div>' +
+            '<div class="sl-muted" style="font-size:12px;margin-top:4px">' + esc((pendingOrders[0].plan && pendingOrders[0].plan.name) || '待支付订单') + ' · ' + money(pendingOrders[0].total_amount) + '</div>' +
+            '<div style="display:flex;gap:8px;margin-top:10px">' +
+              '<button type="button" id="sl-go-pending" class="ios-btn ios-btn-primary ios-btn-sm" style="flex:1">去支付</button>' +
+              '<button type="button" id="sl-cancel-pending" class="ios-btn ios-btn-danger ios-btn-sm" style="flex:1">取消旧订单</button>' +
+            '</div>' +
+          '</div>' : '')
       );
+    }
+
+    function buildFootHtml() {
+      var base = Number(plan[selectedPeriod]) || 0;
+      var finalAmt = calcFinal(base);
+      return (
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">' +
+          '<div>' +
+            '<div class="sl-muted" style="font-size:11.5px">预估金额</div>' +
+            '<strong class="sl-tabular" style="font-size:22px;color:var(--ios-accent)">' + money(finalAmt) + '</strong>' +
+          '</div>' +
+          '<button type="button" id="sl-order-submit" class="ios-btn ios-btn-primary" style="flex:1;max-width:240px">提交订单并支付</button>' +
+        '</div>'
+      );
+    }
+
+    function renderCheckout(root) {
+      var sheet = root.querySelector('.ios-sheet');
+      root.querySelector('.ios-sheet-body').innerHTML = buildBodyHtml();
+      var foot = sheet.querySelector('.ios-sheet-foot');
+      if (!foot) {
+        foot = document.createElement('div');
+        foot.className = 'ios-sheet-foot';
+        sheet.appendChild(foot);
+      }
+      foot.innerHTML = buildFootHtml();
+      mountSheet(root);
     }
 
     function mountSheet(root) {
       root.querySelectorAll('[data-period]').forEach(function (el) {
         el.addEventListener('click', function () {
+          var inp = root.querySelector('#sl-coupon-input');
+          if (inp) couponInputVal = inp.value;
           selectedPeriod = el.getAttribute('data-period');
-          root.querySelector('.ios-sheet-body').innerHTML = buildHtml();
-          mountSheet(root);
+          couponInfo = null;
+          couponErr = '';
+          renderCheckout(root);
         });
       });
+      var clearCoupon = root.querySelector('#sl-coupon-clear');
+      if (clearCoupon) {
+        clearCoupon.addEventListener('click', function () {
+          couponInfo = null;
+          couponInputVal = '';
+          couponErr = '';
+          renderCheckout(root);
+        });
+      }
       root.querySelector('#sl-coupon-btn').addEventListener('click', function () {
         var code = root.querySelector('#sl-coupon-input').value.trim();
-        if (!code) { toast('请输入优惠码', true); return; }
+        couponInputVal = code;
+        if (!code) { couponErr = '请输入优惠码'; renderCheckout(root); return; }
+        couponErr = '';
         api('user/coupon/check', {
           method: 'POST',
           body: { code: code, plan_id: plan.id, period: selectedPeriod }
         }).then(function (r) {
           couponInfo = r.data || {};
           couponInfo._code = code;
+          couponErr = '';
           toast('优惠码验证成功');
-          root.querySelector('.ios-sheet-body').innerHTML = buildHtml();
-          mountSheet(root);
-        }).catch(function (e) { toast(e.message, true); });
+          renderCheckout(root);
+        }).catch(function (e) {
+          couponInfo = null;
+          couponErr = e.message;
+          renderCheckout(root);
+        });
       });
+      var goPend = root.querySelector('#sl-go-pending');
+      if (goPend && pendingOrders && pendingOrders[0]) {
+        goPend.addEventListener('click', function () {
+          openOrderDetailSheet(pendingOrders[0].trade_no);
+        });
+      }
+      var cancelPend = root.querySelector('#sl-cancel-pending');
+      if (cancelPend && pendingOrders && pendingOrders[0]) {
+        cancelPend.addEventListener('click', function () {
+          api('user/order/cancel', { method: 'POST', body: { trade_no: pendingOrders[0].trade_no } }).then(function () {
+            toast('旧订单已取消，请重新提交');
+            pendingOrders = null;
+            state.orders = null;
+            renderCheckout(root);
+          }).catch(function (e) { toast(e.message, true); });
+        });
+      }
       root.querySelector('#sl-order-submit').addEventListener('click', function () {
         var btn = root.querySelector('#sl-order-submit');
+        var inp = root.querySelector('#sl-coupon-input');
+        var code = inp ? inp.value.trim() : '';
+        couponInputVal = code;
         btn.disabled = true;
         btn.textContent = '创建订单中...';
-        var code = root.querySelector('#sl-coupon-input').value.trim();
         api('user/order/save', {
           method: 'POST',
           body: { plan_id: plan.id, period: selectedPeriod, coupon_code: code || undefined }
@@ -709,11 +795,19 @@
           btn.disabled = false;
           btn.textContent = '提交订单并支付';
           toast(e.message, true);
+          if (String(e.message || '').indexOf('未付款') !== -1) {
+            api('user/order/fetch?status=0').then(function (ord) {
+              pendingOrders = Array.isArray(ord.data) ? ord.data : [];
+              renderCheckout(root);
+            }).catch(function () {});
+          }
         });
       });
     }
 
-    openSheet('确认订阅方案', buildHtml(), mountSheet);
+    openSheet('确认订阅方案', '', function (root) {
+      renderCheckout(root);
+    });
   }
 
   function openOrderDetailSheet(tradeNo) {
@@ -736,6 +830,12 @@
           fee = Math.round((Number(order.total_amount) * (Number(mObj.handling_fee_percent || 0) / 100)) + Number(mObj.handling_fee_fixed || 0));
         }
 
+        var breakdown = [];
+        if (Number(order.discount_amount) > 0) breakdown.push(['优惠抵扣', '-' + money(order.discount_amount)]);
+        if (Number(order.surplus_amount) > 0) breakdown.push(['旧套餐折抵', '-' + money(order.surplus_amount)]);
+        if (Number(order.balance_amount) > 0) breakdown.push(['余额抵扣', '-' + money(order.balance_amount)]);
+        if (fee > 0) breakdown.push(['通道手续费', '+' + money(fee)]);
+
         var html =
           '<div class="ios-card ios-card-pad" style="margin-bottom:14px">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
@@ -744,42 +844,84 @@
             '</div>' +
             '<div class="sl-muted" style="font-size:12px">订单号：' + esc(order.trade_no) + '</div>' +
             '<div class="sl-muted" style="font-size:12px;margin-top:2px">创建时间：' + fmtDate(order.created_at, true) + '</div>' +
-            '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--ios-line)">' +
-              '<span class="sl-muted" style="font-size:13px">订单金额</span>' +
+            (breakdown.length ? '<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--ios-line);display:grid;gap:4px;font-size:12.5px">' +
+              breakdown.map(function (b) {
+                return '<div style="display:flex;justify-content:space-between"><span class="sl-muted">' + b[0] + '</span><span class="sl-tabular">' + b[1] + '</span></div>';
+              }).join('') +
+            '</div>' : '') +
+            '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--ios-line)">' +
+              '<span class="sl-muted" style="font-size:13px">实付金额</span>' +
               '<strong class="sl-tabular" style="font-size:22px;color:var(--ios-accent)">' + money(Number(order.total_amount) + fee) + '</strong>' +
             '</div>' +
           '</div>';
 
+        var footHtml = '';
         if (order.status === 0) {
-          if (payResult && payResult.type === 0) {
-            var qr = window.SLQR ? window.SLQR.toSvg(payResult.data, 184) : '';
-            html +=
-              '<div class="ios-card ios-card-pad" style="text-align:center;margin-bottom:14px">' +
-                '<div style="display:inline-block;padding:10px;background:#fff;border-radius:16px;box-shadow:var(--ios-shadow)">' + qr + '</div>' +
-                '<div style="font-size:13px;font-weight:600;margin-top:10px">请使用对应 App 扫码完成支付</div>' +
-                '<div class="sl-muted" style="font-size:12px;margin-top:4px">支付完成后页面会自动确认（每 3 秒检查一次）</div>' +
-                (String(payResult.data).indexOf('http') === 0 ? '<a class="ios-btn ios-btn-tinted ios-btn-sm" style="margin-top:10px" href="' + esc(payResult.data) + '" target="_blank" rel="noopener">直接打开支付链接</a>' : '') +
+          if (payResult && (payResult.type === 0 || payResult.type === 1)) {
+            if (payResult.type === 0) {
+              var qr = window.SLQR ? window.SLQR.toSvg(payResult.data, 188) : '';
+              html +=
+                '<div class="ios-card ios-card-pad" style="text-align:center;margin-bottom:14px">' +
+                  '<div style="display:inline-block;padding:10px;background:#fff;border-radius:16px;box-shadow:var(--ios-shadow)">' + qr + '</div>' +
+                  '<div style="font-size:13.5px;font-weight:700;margin-top:10px">请使用对应 App 扫码完成支付</div>' +
+                  '<div class="sl-muted" style="font-size:12px;margin-top:4px">支付完成后页面每 3 秒自动检查一次；若已付款未刷新，可点下方刷新状态或返回「我的订阅」确认。</div>' +
+                  (String(payResult.data).indexOf('http') === 0 ? '<a class="ios-btn ios-btn-tinted ios-btn-sm" style="margin-top:10px" href="' + esc(payResult.data) + '" target="_blank" rel="noopener">直接打开支付链接</a>' : '') +
+                '</div>';
+            } else {
+              html +=
+                '<div class="ios-card ios-card-pad" style="text-align:center;margin-bottom:14px">' +
+                  '<div style="font-size:14.5px;font-weight:700">已生成支付页面</div>' +
+                  '<div class="sl-muted" style="font-size:12.5px;margin-top:6px">若浏览器未自动打开新窗口，请点击下方按钮前往支付；支付完成后会自动确认。</div>' +
+                  (payResult.data ? '<a class="ios-btn ios-btn-primary ios-btn-block" style="margin-top:12px" href="' + esc(payResult.data) + '" target="_blank" rel="noopener">前往支付页面 ↗</a>' : '') +
+                '</div>';
+            }
+            html += '<button type="button" id="sl-pay-refresh" class="ios-btn ios-btn-tinted ios-btn-block">我已完成支付，刷新订单状态</button>';
+            footHtml =
+              '<div style="display:flex;gap:10px">' +
+                '<button type="button" id="sl-pay-back" class="ios-btn ios-btn-gray" style="flex:1">← 更换支付方式</button>' +
+                '<button type="button" id="sl-pay-cancel" class="ios-btn ios-btn-danger" style="flex:1">取消订单</button>' +
               '</div>';
           } else {
             if (methods.length) {
-              html += '<div class="ios-section-title">选择支付方式</div><div class="ios-group" style="margin-bottom:14px">' +
+              html += '<div class="ios-section-title">选择支付方式</div><div class="ios-group" style="margin-bottom:8px">' +
                 methods.map(function (m) {
                   var active = m.id === selectedMethod;
-                  return '<div class="ios-row ios-row-clickable no-inset" data-mid="' + m.id + '">' +
-                    '<span style="font-size:18px">' + esc(m.icon || '💳') + '</span>' +
-                    '<div style="flex:1;font-size:14px;font-weight:600">' + esc(m.name) + '</div>' +
-                    '<span style="color:var(--ios-accent);font-weight:700">' + (active ? '✓' : '') + '</span>' +
+                  var feeText = [];
+                  if (Number(m.handling_fee_percent) > 0) feeText.push(Number(m.handling_fee_percent) + '%');
+                  if (Number(m.handling_fee_fixed) > 0) feeText.push(money(m.handling_fee_fixed));
+                  return '<div class="ios-row ios-row-clickable no-inset ' + (active ? 'sl-pay-row-active' : '') + '" data-mid="' + m.id + '">' +
+                    renderPaymentIcon(m.icon) +
+                    '<div style="flex:1;min-width:0">' +
+                      '<div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.name) + '</div>' +
+                      (feeText.length ? '<div class="sl-muted" style="font-size:11.5px">手续费 +' + esc(feeText.join(' + ')) + '</div>' : '') +
+                    '</div>' +
+                    '<span style="width:22px;text-align:right;color:var(--ios-accent);font-weight:700">' + (active ? '✓' : '') + '</span>' +
                   '</div>';
                 }).join('') +
               '</div>';
+            } else if (Number(order.total_amount) > 0) {
+              html += '<div class="ios-card ios-card-pad sl-muted" style="text-align:center;font-size:13px">暂无可用支付方式，请联系客服</div>';
             }
-            html += '<div style="display:flex;gap:10px">' +
-              '<button type="button" id="sl-pay-cancel" class="ios-btn ios-btn-danger" style="flex:1">取消订单</button>' +
-              '<button type="button" id="sl-pay-now" class="ios-btn ios-btn-primary" style="flex:2">立即支付</button>' +
-            '</div>';
+            footHtml =
+              '<div style="display:flex;gap:10px">' +
+                '<button type="button" id="sl-pay-cancel" class="ios-btn ios-btn-danger" style="flex:1">取消订单</button>' +
+                '<button type="button" id="sl-pay-now" class="ios-btn ios-btn-primary" style="flex:2">立即支付</button>' +
+              '</div>';
           }
         }
         body.innerHTML = html;
+        var sheet = root.querySelector('.ios-sheet');
+        var foot = sheet.querySelector('.ios-sheet-foot');
+        if (footHtml) {
+          if (!foot) {
+            foot = document.createElement('div');
+            foot.className = 'ios-sheet-foot';
+            sheet.appendChild(foot);
+          }
+          foot.innerHTML = footHtml;
+        } else if (foot) {
+          foot.remove();
+        }
 
         body.querySelectorAll('[data-mid]').forEach(function (el) {
           el.addEventListener('click', function () {
@@ -788,7 +930,41 @@
           });
         });
 
-        var cancelBtn = body.querySelector('#sl-pay-cancel');
+        var backBtn = root.querySelector('#sl-pay-back');
+        if (backBtn) {
+          backBtn.addEventListener('click', function () {
+            if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+            payResult = null;
+            renderOrderBody(root);
+          });
+        }
+
+        var refreshBtn = body.querySelector('#sl-pay-refresh');
+        if (refreshBtn) {
+          refreshBtn.addEventListener('click', function () {
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = '正在查询...';
+            api('user/order/check?trade_no=' + encodeURIComponent(order.trade_no)).then(function (chk) {
+              if (chk.data === 3 || chk.data === 1) {
+                if (state.pollTimer) { clearInterval(state.pollTimer); state.pollTimer = null; }
+                toast('支付已确认！');
+                state.sub = null; state.orders = null;
+                closeSheet();
+                loadRouteData(state.route).then(render);
+              } else {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = '我已完成支付，刷新订单状态';
+                toast('暂未收到支付回调，如已付款请稍候再试');
+              }
+            }).catch(function (e) {
+              refreshBtn.disabled = false;
+              refreshBtn.textContent = '我已完成支付，刷新订单状态';
+              toast(e.message, true);
+            });
+          });
+        }
+
+        var cancelBtn = root.querySelector('#sl-pay-cancel');
         if (cancelBtn) {
           cancelBtn.addEventListener('click', function () {
             api('user/order/cancel', { method: 'POST', body: { trade_no: order.trade_no } }).then(function () {
@@ -800,7 +976,7 @@
           });
         }
 
-        var payBtn = body.querySelector('#sl-pay-now');
+        var payBtn = root.querySelector('#sl-pay-now');
         if (payBtn) {
           payBtn.addEventListener('click', function () {
             if (Number(order.total_amount) > 0 && !selectedMethod) {
@@ -1106,7 +1282,9 @@
                 '</div>' : '') +
               '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">' +
                 (s.plan_id
-                  ? '<button type="button" class="ios-btn ios-btn-sm" style="background:#fff;color:var(--ios-accent)" data-nav="plan" data-param="' + esc(s.plan_id) + '">续费订阅</button>' +
+                  ? ((s.plan && s.plan.renew === false)
+                      ? '<button type="button" class="ios-btn ios-btn-sm" style="background:#fff;color:var(--ios-accent)" data-nav="plan">升级套餐</button>'
+                      : '<button type="button" class="ios-btn ios-btn-sm" style="background:#fff;color:var(--ios-accent)" data-nav="plan" data-param="' + esc(s.plan_id) + '">续费订阅</button>') +
                     '<button type="button" class="ios-btn ios-btn-sm" style="background:rgba(255,255,255,.2);color:#fff" data-action="copy-sub">复制链接</button>' +
                     '<button type="button" class="ios-btn ios-btn-sm" style="background:rgba(255,255,255,.2);color:#fff" data-action="open-sub-sheet">一键导入</button>'
                   : '<button type="button" class="ios-btn ios-btn-sm" style="background:#fff;color:var(--ios-accent)" data-nav="plan">选购套餐</button>') +
@@ -1227,20 +1405,22 @@
             '<button type="button" data-plan-filter="onetime" class="' + (state.planFilter === 'onetime' ? 'is-active' : '') + '">一次性/流量</button>' +
           '</div>' +
         '</div>' +
-        (filtered.length ? '<div class="sl-grid-3">' + filtered.map(function (p, idx) {
+        (filtered.length ? '<div class="sl-grid-3">' + filtered.map(function (p) {
           var firstPeriod = PERIODS.find(function (pr) { return p[pr[0]] != null; });
           var priceText = firstPeriod ? money(p[firstPeriod[0]]) : '暂无价格';
           var unitText = firstPeriod ? ' / ' + firstPeriod[2] : '';
           var soldOut = p.capacity_limit === 0 || p.capacity_limit === '0' || p.capacity_limit === 'Sold out' || p.capacity_limit === '已售罄';
-          var highlight = idx === 1;
+          var tags = Array.isArray(p.tags) ? p.tags : [];
+          var highlight = tags.indexOf('推荐') !== -1;
+          var badgeText = highlight ? '推荐' : (tags[0] || '');
           return '<div class="ios-card ios-card-pad" style="display:flex;flex-direction:column;' + (highlight ? 'box-shadow:var(--ios-shadow-lg),0 0 0 1.5px var(--ios-accent)' : '') + '">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
               '<strong style="font-size:17px">' + esc(p.name) + '</strong>' +
-              (highlight ? '<span class="ios-pill ios-pill-blue">推荐</span>' : (Array.isArray(p.tags) && p.tags[0] ? '<span class="ios-pill ios-pill-gray">' + esc(p.tags[0]) + '</span>' : '')) +
+              (badgeText ? '<span class="ios-pill ' + (highlight ? 'ios-pill-blue' : 'ios-pill-gray') + '">' + esc(badgeText) + '</span>' : '') +
             '</div>' +
             '<div class="sl-tabular" style="margin-top:12px;font-size:28px;font-weight:700;color:' + (highlight ? 'var(--ios-accent)' : 'var(--ios-text)') + '">' + priceText + '<span class="sl-muted" style="font-size:13px;font-weight:400">' + esc(unitText) + '</span></div>' +
-            '<div class="sl-muted" style="font-size:12.5px;margin-top:6px;min-height:36px">' + esc(plainText(p.content)) + '</div>' +
-            '<div style="border-top:0.5px solid var(--ios-line);margin:14px 0;padding-top:12px;display:grid;gap:8px;font-size:13px;flex:1">' +
+            '<div class="sl-muted" style="font-size:12.5px;margin-top:8px;flex:1;line-height:1.6">' + esc(plainText(p.content)) + '</div>' +
+            '<div style="border-top:0.5px solid var(--ios-line);margin:14px 0 16px;padding-top:12px;display:grid;gap:8px;font-size:13px">' +
               '<div style="display:flex;justify-content:space-between"><span class="sl-muted">可用流量</span><strong class="sl-tabular">' + (p.transfer_enable == null ? '不限' : esc(p.transfer_enable) + ' GB') + '</strong></div>' +
               '<div style="display:flex;justify-content:space-between"><span class="sl-muted">网络速度</span><strong>' + (p.speed_limit ? esc(p.speed_limit) + ' Mbps' : '不限速') + '</strong></div>' +
               '<div style="display:flex;justify-content:space-between"><span class="sl-muted">设备数量</span><strong>' + (p.device_limit ? esc(p.device_limit) + ' 台' : '不限设备') + '</strong></div>' +
@@ -2006,6 +2186,7 @@
     state.route = parsed.route;
     state.param = parsed.param;
     syncCookie();
+    if (window.scrollTo) window.scrollTo(0, 0);
 
     if (isAuthRoute(state.route)) {
       if (!state.guestConfig) {

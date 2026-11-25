@@ -251,3 +251,45 @@ test('dashboard export uses same-origin HTTPS path when subscribe_url is plain H
     assert.ok(calls.some(c => String(c[0]).startsWith('https://example.test/s/token123?flag=meta')));
   } finally { dom.window.close(); }
 });
+
+test('order checkout renders image payment icons cleanly and lets user switch payment method after clicking pay', async () => {
+  const { dom } = await mountSpa('#/order/TR123', {
+    'user/order/fetch': [],
+    'user/order/detail': {
+      trade_no: 'TR123',
+      status: 0,
+      total_amount: 1788,
+      surplus_amount: 100,
+      created_at: 1732500000,
+      plan: { name: '月付50G' }
+    },
+    'user/order/getPaymentMethod': [
+      { id: 1, name: '支付宝', icon: 'https://example.test/alipay.png', handling_fee_fixed: 0, handling_fee_percent: 0 },
+      { id: 2, name: '支付宝-备用', icon: '💙', handling_fee_fixed: 0, handling_fee_percent: 2 }
+    ],
+    'user/order/checkout': null
+  });
+  try {
+    const doc = dom.window.document;
+    // Verify image icon is rendered as <img>, never raw URL text
+    const img = doc.querySelector('.sl-pay-icon-img');
+    assert.ok(img);
+    assert.equal(img.getAttribute('src'), 'https://example.test/alipay.png');
+    assert.doesNotMatch(doc.getElementById('sl-sheet-backdrop').textContent, /https:\/\/example\.test\/alipay\.png/);
+    assert.match(doc.getElementById('sl-sheet-backdrop').textContent, /旧套餐折抵/);
+
+    // Mock checkout returning QR code (type: 0) and verify back-to-methods button works
+    dom.window.fetch = async (url) => {
+      if (String(url).includes('order/checkout')) {
+        return { ok: true, status: 200, json: async () => ({ type: 0, data: 'https://qr.alipay.com/bax123' }) };
+      }
+      return { ok: true, status: 200, json: async () => ({ data: 0 }) };
+    };
+    doc.getElementById('sl-pay-now').click();
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.ok(doc.getElementById('sl-pay-back'), 'must provide button to return and change payment method');
+    assert.ok(doc.getElementById('sl-pay-cancel'), 'must provide cancel button on QR screen');
+    doc.getElementById('sl-pay-back').click();
+    assert.ok(doc.getElementById('sl-pay-now'), 'clicking back must restore payment method selector');
+  } finally { dom.window.close(); }
+});

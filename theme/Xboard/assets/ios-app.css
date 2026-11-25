@@ -624,10 +624,19 @@ body.sl-ios-body > div[style*="text-align:center"] {
 }
 
 /* iOS Sheet / Modal */
+body.sl-sheet-open { overflow: hidden; }
+body.sl-sheet-open .woot-widget-bubble,
+body.sl-sheet-open .woot--bubble-holder {
+  display: none !important;
+}
 .ios-sheet-backdrop {
   position: fixed;
-  inset: 0;
-  z-index: 90;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  z-index: 2147483600;
   background: rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -650,24 +659,77 @@ body.sl-ios-body > div[style*="text-align:center"] {
   animation: iosSheetIn 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .ios-sheet-head {
-  padding: 16px 20px;
+  padding: 15px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--ios-glass);
   backdrop-filter: blur(16px);
   border-bottom: 0.5px solid var(--ios-line);
+  flex: none;
 }
 .ios-sheet-body {
   padding: 18px 20px 24px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.ios-sheet-foot {
+  padding: 14px 20px max(16px, env(safe-area-inset-bottom, 16px));
+  background: var(--ios-glass);
+  backdrop-filter: blur(16px);
+  border-top: 0.5px solid var(--ios-line);
+  flex: none;
+}
+.sl-pay-icon-img {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  object-fit: contain;
+  flex: none;
+  background: #fff;
+  padding: 2px;
+  box-shadow: 0 0 0 0.5px var(--ios-line);
+}
+.sl-pay-icon-emoji {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex: none;
+  background: var(--ios-fill-2);
+}
+.sl-pay-row-active {
+  background: var(--ios-accent-soft);
+}
+.sl-period-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.sl-period-pill {
+  border: 1px solid var(--ios-line);
+  background: var(--ios-surface);
+  color: var(--ios-text);
+  border-radius: 14px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.sl-period-pill.is-active {
+  border-color: var(--ios-accent);
+  background: var(--ios-accent-soft);
 }
 @media (max-width: 767px) {
   .ios-sheet-backdrop { align-items: flex-end; padding: 0; }
   .ios-sheet {
     max-width: 100%;
     border-radius: 24px 24px 0 0;
-    max-height: 86vh;
+    max-height: 88vh;
   }
 }
 @keyframes iosSheetIn {
@@ -681,7 +743,7 @@ body.sl-ios-body > div[style*="text-align:center"] {
   top: 18px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 120;
+  z-index: 2147483640;
   display: flex;
   flex-direction: column;
   gap: 8px;
