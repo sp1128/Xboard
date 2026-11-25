@@ -96,7 +96,7 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         }
 
         ksort($params);
-        $str = stripslashes(urldecode(http_build_query($params))) . $this->getConfig('key');
+        $str = $this->buildSignString($params) . $this->getConfig('key');
         $params['sign'] = md5($str);
         $params['sign_type'] = 'MD5';
 
@@ -104,6 +104,24 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             'type' => 1,
             'data' => $this->getConfig('url') . '/submit.php?' . http_build_query($params)
         ];
+    }
+
+    /**
+     * Build the EPay V1 signature string: params already sorted by key,
+     * joined as k=v&k=v with values used as-is, WITHOUT URL encoding.
+     * Per YC/EPay V1 spec: "值不做 URL 编码". The old
+     * stripslashes(urldecode(http_build_query())) round-trip does not
+     * reproduce the raw values exactly when they contain Chinese, ://,
+     * &, spaces, etc., which broke YC notification verification while
+     * TY/SC (plain ASCII values) passed.
+     */
+    private function buildSignString(array $params): string
+    {
+        $parts = [];
+        foreach ($params as $k => $v) {
+            $parts[] = $k . '=' . $v;
+        }
+        return implode('&', $parts);
     }
 
     public function notify($params): array|bool
@@ -139,7 +157,7 @@ class Plugin extends AbstractPlugin implements PaymentInterface
         $sign = $params['sign'];
         unset($params['sign'], $params['sign_type']);
         ksort($params);
-        $str = stripslashes(urldecode(http_build_query($params))) . $secret;
+        $str = $this->buildSignString($params) . $secret;
 
         if (!hash_equals(md5($str), $sign)) {
             return false;
