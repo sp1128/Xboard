@@ -53,12 +53,22 @@ class Plugin extends AbstractPlugin implements PaymentInterface
 
     public function pay($order): array
     {
+        // Each payment attempt gets a unique out_trade_no at the gateway.
+        // Xboard reuses the same order trade_no when the user switches payment
+        // methods mid-order; gateways reject a repeated out_trade_no whose
+        // parameters changed ("支付参数有变化，请更换订单号重新发起支付").
+        // Appending a per-attempt suffix makes every attempt unique, so
+        // switching methods just works. The suffix is stripped back in
+        // notify(). Order trade_no values are all digits
+        // (Helper::generateOrderNo), so a '-' separator can never collide
+        // with the original value.
+        $outTradeNo = $order['trade_no'] . '-' . time() . mt_rand(1000, 9999);
         $params = [
             'money' => $order['total_amount'] / 100,
             'name' => $order['trade_no'],
             'notify_url' => $order['notify_url'],
             'return_url' => $order['return_url'],
-            'out_trade_no' => $order['trade_no'],
+            'out_trade_no' => $outTradeNo,
             'pid' => $this->getConfig('pid')
         ];
 
@@ -116,8 +126,17 @@ class Plugin extends AbstractPlugin implements PaymentInterface
             return false;
         }
 
+        // Strip the per-attempt suffix appended in pay() so the order lookup
+        // uses the original Xboard trade_no. The signature above was already
+        // verified against the suffixed value the gateway signed.
+        $outTradeNo = $params['out_trade_no'];
+        $dashPos = strpos($outTradeNo, '-');
+        if ($dashPos !== false) {
+            $outTradeNo = substr($outTradeNo, 0, $dashPos);
+        }
+
         return [
-            'trade_no' => $params['out_trade_no'],
+            'trade_no' => $outTradeNo,
             'callback_no' => $params['trade_no']
         ];
     }
