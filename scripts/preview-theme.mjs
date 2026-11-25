@@ -77,7 +77,14 @@ http.createServer(async (req, res) => {
     if (url.pathname.startsWith('/theme/Xboard/assets/')) {
       const asset = path.resolve(root, url.pathname.slice('/theme/Xboard/'.length));
       if (!asset.startsWith(root + path.sep)) { res.writeHead(403).end(); return; }
-      res.setHeader('Content-Type', asset.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'application/octet-stream');
+      const ctype = asset.endsWith('.js')
+        ? 'application/javascript; charset=utf-8'
+        : asset.endsWith('.css')
+          ? 'text/css; charset=utf-8'
+          : asset.endsWith('.svg')
+            ? 'image/svg+xml'
+            : 'application/octet-stream';
+      res.setHeader('Content-Type', ctype);
       res.end(await fs.readFile(asset));
       return;
     }

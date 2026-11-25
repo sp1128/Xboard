@@ -3,252 +3,222 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="description" content="星屿StarLink：住宅 IP 节点（日本 100 分 / 美国 97 分）+ 32 个机房 IP 节点，覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度，日常用 AI 没问题。" />
   <title>{{$title}} - 住宅 IP · 机房 IP 节点</title>
   <style>
-    /* 访客落地页。布局参考聚盟云：深色底、左文右图首屏、套餐表、2×2 卖点、发光 CTA。 */
-    body.sl-landing-page{--bg:#1b1f2a;--bg-raise:#21263a;--card:#232837;--card-hi:#2a3044;--line:rgba(255,255,255,.08);--line-hi:rgba(255,255,255,.16);--text:rgba(255,255,255,.92);--muted:#8d95a8;--faint:#5f6779;--primary:#165dff;--primary-hi:#4080ff;--glow-a:rgba(22,93,255,.22);--glow-b:rgba(168,72,255,.16);--ok:#23c343}
-    /* :where() 让清零规则优先级为 0，否则 #id 会盖过下面所有 .sl-* 的间距 */
+    /* iOS 26 Liquid Glass 访客落地页 */
     :where(#sl-landing,#sl-landing *){box-sizing:border-box;margin:0;padding:0}
-    body.sl-landing-page{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Roboto,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
-    body.sl-landing-page>div[style*="text-align:center"]{display:none!important}/* custom_html 自带页脚与本页 footer 重复 */
+    body.sl-landing-page{
+      --bg:#f2f2f7;--surface:#ffffff;--surface-2:#ffffff;--fill:rgba(118,118,128,.12);--fill-2:rgba(120,120,128,.08);
+      --line:rgba(60,60,67,.12);--text:#000000;--muted:rgba(60,60,67,.65);--faint:rgba(60,60,67,.38);
+      --accent:#007aff;--accent-soft:rgba(0,122,255,.12);--accent-glow:rgba(0,122,255,.26);
+      --ok:#34c759;--indigo:#5856d6;--glass:rgba(255,255,255,.78);
+      --shadow:0 2px 14px rgba(0,0,0,.045),0 0 0 .5px rgba(0,0,0,.04);
+      --shadow-lg:0 16px 40px rgba(0,0,0,.08),0 0 0 .5px rgba(0,0,0,.05);
+      margin:0;background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      line-height:1.55;-webkit-font-smoothing:antialiased;
+    }
+    html.dark body.sl-landing-page{
+      --bg:#000000;--surface:#1c1c1e;--surface-2:#2c2c2e;--fill:rgba(118,118,128,.24);--fill-2:rgba(120,120,128,.16);
+      --line:rgba(84,84,88,.48);--text:#ffffff;--muted:rgba(235,235,245,.65);--faint:rgba(235,235,245,.38);
+      --accent:#0a84ff;--accent-soft:rgba(10,132,255,.18);--accent-glow:rgba(10,132,255,.32);
+      --ok:#30d158;--indigo:#5e5ce6;--glass:rgba(28,28,30,.78);
+      --shadow:0 2px 14px rgba(0,0,0,.35),0 0 0 .5px rgba(255,255,255,.08);
+      --shadow-lg:0 18px 42px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.1);
+    }
+    body.sl-landing-page>div[style*="text-align:center"]{display:none!important}
     #sl-landing{overflow-x:clip}
     #sl-landing a{color:inherit;text-decoration:none}
-    .sl-flag{display:inline-block;width:18px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:6px;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
-    #sl-landing a:focus-visible,#sl-landing button:focus-visible{outline:2px solid var(--primary-hi);outline-offset:3px;border-radius:6px}
-    :where(#sl-landing) .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
-    :where(#sl-landing) section{padding:96px 0;scroll-margin-top:56px}
+    :where(#sl-landing) .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+    :where(#sl-landing) section{padding:64px 0;scroll-margin-top:64px}
 
-    /* 按钮 */
-    .sl-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 28px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,box-shadow .15s}
-    .sl-btn-primary{background:var(--primary);color:#fff!important}
-    .sl-btn-primary:hover{background:var(--primary-hi);box-shadow:0 6px 24px rgba(22,93,255,.35)}
-    .sl-btn-ghost{border-color:var(--line-hi);color:var(--text)!important;background:rgba(255,255,255,.03)}
-    .sl-btn-ghost:hover{border-color:rgba(255,255,255,.32);background:rgba(255,255,255,.06)}
-    .sl-btn-sm{height:30px;padding:0 14px;font-size:13px}
-    .sl-btn-lg{height:44px;padding:0 36px;font-size:15px}
-
-    /* 导航 */
-    .sl-nav{position:sticky;top:0;z-index:50;background:rgba(27,31,42,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-    .sl-nav .wrap{height:56px;display:flex;align-items:center;gap:28px}
-    .sl-brand{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;letter-spacing:.2px;color:#fff}
-    .sl-brand i{display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--primary);color:#fff;font-style:normal;font-size:14px}
+    /* Frosted Navbar */
+    .sl-nav{position:sticky;top:0;z-index:50;background:var(--glass);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--line)}
+    .sl-nav .wrap{height:58px;display:flex;align-items:center;gap:24px}
+    .sl-brand{display:flex;align-items:center;gap:9px;font-size:16.5px;font-weight:700;letter-spacing:-.2px}
+    .sl-brand i{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--accent);color:#fff;font-style:normal;font-size:14px}
     .sl-nav nav{display:flex;gap:24px;font-size:14px;color:var(--muted)}
-    .sl-nav nav a:hover{color:#fff}
-    .sl-nav .sl-nav-end{margin-left:auto;display:flex;align-items:center;gap:16px;font-size:14px}
-    .sl-nav .sl-nav-end>a:not(.sl-btn){color:var(--muted)}
-    .sl-nav .sl-nav-end>a:not(.sl-btn):hover{color:#fff}
+    .sl-nav nav a:hover{color:var(--text)}
+    .sl-nav-end{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:14px}
 
-    /* 首屏 */
-    .sl-hero{position:relative;overflow:hidden}
-    .sl-hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:32px;min-height:calc(100vh - 56px);max-height:760px;padding-top:40px;padding-bottom:40px}
-    .sl-pill{display:inline-flex;align-items:center;gap:8px;padding:3px 12px;border:1px solid var(--line-hi);border-radius:999px;font-size:12px;color:var(--muted);background:rgba(255,255,255,.03)}
-    .sl-pill:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
-    .sl-hero h1{margin-top:20px;font-size:clamp(32px,3.4vw,48px);line-height:1.22;font-weight:400;color:rgba(255,255,255,.86);letter-spacing:.5px}
-    .sl-hero h1 b{font-weight:800;color:#fff}
-    .sl-hero-desc{display:flex;gap:10px;margin-top:22px;max-width:520px;font-size:15px;color:var(--muted);line-height:1.75}
-    .sl-hero-desc i{flex:none;display:grid;place-items:center;width:20px;height:20px;margin-top:3px;border-radius:5px;background:var(--primary);color:#fff;font-style:normal;font-size:12px;font-weight:700}
-    .sl-scores{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
-    .sl-scores span{padding:6px 12px;border-radius:6px;background:var(--card);border:1px solid var(--line);font-size:13px;color:var(--muted)}
-    .sl-scores b{color:#fff;margin-left:4px}
-    .sl-hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
-    .sl-hero-art{position:relative;aspect-ratio:1/1;max-width:560px;width:100%;justify-self:end}
-    .sl-hero-art:before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 40% 40%,var(--glow-a),transparent 62%),radial-gradient(circle at 70% 70%,var(--glow-b),transparent 60%);filter:blur(30px)}
-    .sl-hero-art svg{position:relative;width:100%;height:100%}
-    .sl-pulse{transform-origin:center;transform-box:fill-box;animation:sl-pulse 2.6s ease-out infinite}
-    .sl-pulse.d2{animation-delay:1.3s}
-    @keyframes sl-pulse{from{opacity:.7;transform:scale(1)}to{opacity:0;transform:scale(3.2)}}
-    .sl-dash{stroke-dasharray:4 6;animation:sl-dash 1.8s linear infinite}
-    @keyframes sl-dash{to{stroke-dashoffset:-20}}
+    /* Pill Buttons */
+    .sl-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 22px;border-radius:9999px;font-size:14px;font-weight:600;border:0;cursor:pointer;white-space:nowrap;transition:transform .15s,opacity .15s}
+    .sl-btn:active{transform:scale(.965)}
+    .sl-btn-primary{background:var(--accent);color:#fff!important;box-shadow:0 8px 22px var(--accent-glow)}
+    .sl-btn-tinted{background:var(--accent-soft);color:var(--accent)!important}
+    .sl-btn-gray{background:var(--fill);color:var(--text)!important}
+    .sl-btn-sm{height:32px;padding:0 14px;font-size:13px}
+    .sl-btn-lg{height:46px;padding:0 28px;font-size:15px}
 
-    /* 区块标题 */
-    .sl-head{text-align:center;margin-bottom:40px}
-    .sl-head h2{font-size:clamp(26px,3vw,36px);font-weight:700;color:#fff;letter-spacing:1px}
-    .sl-head p{margin-top:10px;color:var(--muted);font-size:14px}
-    .sl-regions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:-12px 0 40px}
-    .sl-regions span{padding:5px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;color:rgba(255,255,255,.8)}
+    /* Hero */
+    .sl-hero{padding:52px 0 36px}
+    .sl-hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);align-items:center;gap:40px}
+    .sl-pill{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:9999px;background:var(--surface);box-shadow:var(--shadow);font-size:12px;font-weight:500;color:var(--muted)}
+    .sl-pill:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+    .sl-hero h1{margin-top:18px;font-size:clamp(32px,3.8vw,48px);line-height:1.15;font-weight:700;letter-spacing:-.8px}
+    .sl-hero h1 span{color:var(--accent)}
+    .sl-hero-desc{margin-top:16px;max-width:540px;font-size:15px;color:var(--muted);line-height:1.7}
+    .sl-hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+    .sl-stat-widgets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:26px;max-width:520px}
+    .sl-widget{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow)}
+    .sl-widget-label{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:space-between}
+    .sl-widget-val{font-size:24px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+    .sl-widget-val small{font-size:12px;font-weight:500;color:var(--muted);margin-left:2px}
 
-    /* 套餐表 */
-    .sl-glow{position:relative}
-    .sl-glow:before{content:"";position:absolute;inset:-60px -40px;z-index:0;pointer-events:none;background:radial-gradient(50% 60% at 25% 50%,var(--glow-a),transparent 70%),radial-gradient(50% 60% at 78% 50%,var(--glow-b),transparent 70%);filter:blur(20px)}
-    .sl-glow>*{position:relative;z-index:1}
-    .sl-table{max-width:1080px;margin:0 auto;border:1px solid var(--line);border-radius:10px;background:rgba(30,34,47,.92);overflow:hidden}
-    .sl-table table{width:100%;border-collapse:collapse;font-size:14px}
-    .sl-table th{padding:14px 20px;text-align:left;font-weight:400;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap}
-    .sl-table th+th{border-left:1px solid var(--line)}
-    .sl-table td{padding:16px 20px;border-bottom:1px solid var(--line);vertical-align:middle;color:rgba(255,255,255,.9)}
-    .sl-table tr:last-child td{border-bottom:0}
-    .sl-table tbody tr:hover td{background:rgba(255,255,255,.025)}
-    .sl-table .sl-plan-name{font-weight:600;color:#fff}
-    .sl-table .sl-plan-note{margin-top:4px;font-size:12px;color:var(--faint);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:260px}
-    .sl-table .sl-strong{font-weight:600}
-    .sl-table .sl-price{font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
-    .sl-table .sl-price small{font-weight:400;color:var(--muted)}
-    .sl-table td:last-child{text-align:right}
-    .sl-state{padding:40px 20px!important;text-align:center!important;color:var(--muted)!important}
-    .sl-after-table{text-align:center;margin-top:72px}
-    .sl-after-table h3{font-size:clamp(22px,2.6vw,32px);font-weight:700;color:#fff;margin-bottom:24px;letter-spacing:1px}
+    /* Wallet Hero Stack */
+    .sl-stack{position:relative;display:grid;gap:14px}
+    .sl-stack:before{content:"";position:absolute;inset:-16px;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--accent-glow),transparent 62%),radial-gradient(circle at 80% 70%,rgba(175,82,222,.22),transparent 60%);filter:blur(26px);pointer-events:none}
+    .sl-wallet{position:relative;z-index:1;border-radius:22px;padding:24px;color:#fff;background:linear-gradient(135deg,var(--accent),#5856d6 58%,#7d4cdb);box-shadow:0 18px 40px var(--accent-glow);overflow:hidden}
+    .sl-wallet:after{content:"";position:absolute;right:-50px;top:-60px;width:210px;height:210px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.24),transparent 70%)}
+    .sl-wallet-top{display:flex;justify-content:space-between;font-size:12px;opacity:.88}
+    .sl-wallet-title{font-size:22px;font-weight:700;margin-top:10px}
+    .sl-wallet-sub{font-size:12.5px;opacity:.84;margin-top:4px}
+    .sl-wallet-bar{margin-top:18px;height:7px;border-radius:9999px;background:rgba(255,255,255,.25);overflow:hidden}
+    .sl-wallet-bar i{display:block;height:100%;width:24%;background:#fff;border-radius:9999px}
+    .sl-wallet-foot{display:flex;justify-content:space-between;font-size:12px;opacity:.9;margin-top:8px;font-variant-numeric:tabular-nums}
 
-    /* 卖点卡 */
-    .sl-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 64px;max-width:1080px;margin:0 auto}
-    .sl-feature{padding:24px;border:1px solid var(--line);border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.015),rgba(255,255,255,.04));transition:border-color .2s}
-    .sl-feature:hover{border-color:var(--line-hi)}
-    .sl-ico{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--card-hi);border:1px solid var(--line-hi);color:#fff;margin-bottom:18px}
-    .sl-ico svg{width:20px;height:20px}
-    .sl-feature h3{font-size:20px;font-weight:600;color:#fff;margin-bottom:8px}
-    .sl-feature p{font-size:14px;color:var(--muted);line-height:1.8}
+    /* Inset Group & Cards */
+    .sl-group{position:relative;z-index:1;background:var(--surface);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+    .sl-row{display:flex;align-items:center;gap:12px;padding:13px 16px;position:relative}
+    .sl-row+.sl-row:before{content:"";position:absolute;top:0;left:58px;right:0;height:.5px;background:var(--line)}
+    .sl-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;font-size:14px;flex:none}
+    .sl-row-main{flex:1;min-width:0}
+    .sl-row-main b{display:block;font-size:14px;font-weight:600}
+    .sl-row-main span{display:block;font-size:12px;color:var(--muted)}
+    .sl-row-tag{font-size:12px;font-weight:600;color:var(--accent)}
 
-    /* 节点 */
-    .sl-nodes{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-    .sl-node{position:relative;overflow:hidden;padding:32px;border:1px solid var(--line);border-radius:10px;background:var(--bg-raise)}
-    .sl-node:after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,var(--glow-a),transparent 70%)}
-    .sl-node.us:after{background:radial-gradient(circle,var(--glow-b),transparent 70%)}
-    .sl-node-top{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:600;color:#fff}
-    .sl-node-top em{display:flex}.sl-node-top .sl-flag{width:30px;height:20px}
-    .sl-node-score{margin-top:22px;display:flex;align-items:baseline;gap:6px;color:var(--muted);font-size:13px}
-    .sl-node-score b{font-size:44px;font-weight:700;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
-    .sl-bar{margin-top:14px;height:6px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
-    .sl-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),#7b61ff)}
-    .sl-node p{margin-top:14px;font-size:13px;color:var(--muted)}
-    .sl-nodes-note{text-align:center;margin-top:24px;font-size:13px;color:var(--faint)}
-    .sl-nodes-mojie{max-width:1080px;margin:24px auto 0;padding:16px 20px;border:1px solid var(--line);border-radius:10px;background:var(--bg-raise);text-align:center;font-size:14px;line-height:1.8;color:rgba(255,255,255,.85)}
+    /* Section Head */
+    .sl-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+    .sl-head h2{font-size:clamp(24px,3vw,32px);font-weight:700;letter-spacing:-.4px}
+    .sl-head p{margin-top:4px;font-size:14px;color:var(--muted)}
+    .sl-seg{display:inline-flex;padding:3px;border-radius:11px;background:var(--fill);gap:2px}
+    .sl-seg button{border:0;background:transparent;padding:6px 14px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer}
+    .sl-seg button.is-active{background:var(--surface-2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
 
-    /* 客户端 */
-    .sl-clients{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
-    .sl-client{display:flex;flex-direction:column;padding:22px;border:1px solid var(--line);border-radius:8px;background:var(--card);transition:border-color .2s,transform .2s}
-    .sl-client:hover{border-color:rgba(22,93,255,.6);transform:translateY(-2px)}
-    .sl-client h3{font-size:16px;color:#fff;font-weight:600}
-    .sl-client p{flex:1;margin-top:6px;font-size:13px;color:var(--muted);line-height:1.7}
-    .sl-client span{margin-top:14px;font-size:13px;color:var(--primary-hi)}
+    /* Plans Grid */
+    .sl-plans-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .sl-plan-card{background:var(--surface);border-radius:22px;padding:24px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+    .sl-plan-card.is-hot{box-shadow:var(--shadow-lg),0 0 0 1.5px var(--accent)}
+    .sl-plan-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .sl-plan-name{font-size:18px;font-weight:700}
+    .sl-badge{padding:3px 10px;border-radius:9999px;font-size:11.5px;font-weight:600;background:var(--fill);color:var(--muted)}
+    .sl-plan-card.is-hot .sl-badge{background:var(--accent);color:#fff}
+    .sl-plan-price{margin-top:14px;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+    .sl-plan-card.is-hot .sl-plan-price{color:var(--accent)}
+    .sl-plan-price small{font-size:13px;font-weight:400;color:var(--muted);margin-left:3px}
+    .sl-plan-note{margin-top:8px;font-size:13px;color:var(--muted);min-height:40px;line-height:1.55}
+    .sl-plan-specs{margin:16px 0 20px;padding-top:14px;border-top:.5px solid var(--line);display:grid;gap:9px;font-size:13px;flex:1}
+    .sl-plan-specs div{display:flex;justify-content:space-between;gap:12px}
+    .sl-plan-specs span{color:var(--muted)}
+    .sl-plan-specs b{font-weight:600;font-variant-numeric:tabular-nums}
+    .sl-state-box{grid-column:1/-1;background:var(--surface);border-radius:18px;padding:36px 20px;text-align:center;color:var(--muted);box-shadow:var(--shadow)}
 
-    /* 邀请 / 频道 */
-    .sl-duo{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
-    .sl-duo .sl-feature .sl-btn{margin-top:20px}
+    /* Bento Grids */
+    .sl-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+    .sl-card{background:var(--surface);border-radius:20px;padding:24px;box-shadow:var(--shadow)}
+    .sl-card h3{font-size:18px;font-weight:700;margin-bottom:8px}
+    .sl-card p{font-size:13.5px;color:var(--muted);line-height:1.7}
+    .sl-regions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .sl-regions span{padding:5px 12px;border-radius:9999px;background:var(--fill-2);font-size:12.5px;font-weight:500}
 
-    /* 收尾 CTA */
-    .sl-final{text-align:center;padding:140px 0!important}
-    .sl-final h2{font-size:clamp(26px,3.2vw,40px);font-weight:800;color:#fff;letter-spacing:1px;margin-bottom:28px}
+    /* Clients */
+    .sl-clients{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    .sl-client{background:var(--surface);border-radius:18px;padding:18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;transition:transform .16s}
+    .sl-client:hover{transform:translateY(-2px)}
+    .sl-client-app{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;color:#fff;flex:none}
+    .sl-client h3{font-size:15px;font-weight:700}
+    .sl-client p{font-size:12px;color:var(--muted);margin-top:2px}
 
-    /* 页脚 */
-    .sl-footer{border-top:1px solid var(--line)}
-    .sl-footer .wrap{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px;padding-top:48px;padding-bottom:40px}
-    .sl-footer p{margin-top:16px;font-size:14px;color:var(--faint)}
-    .sl-footer h4{font-size:15px;font-weight:500;color:#fff;margin-bottom:14px}
-    .sl-footer ul{list-style:none;display:grid;gap:10px;font-size:14px;color:var(--muted)}
-    .sl-footer ul a:hover{color:#fff}
-    .sl-chip{display:inline-block;padding:4px 10px;border:1px solid var(--line-hi);border-radius:4px;background:rgba(255,255,255,.04);font-size:13px;color:rgba(255,255,255,.85)}
-    .sl-copy{border-top:1px solid var(--line)}
-    .sl-copy .wrap{display:flex;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:24px;font-size:13px;color:var(--faint)}
+    /* Footer */
+    .sl-footer{border-top:.5px solid var(--line);padding:36px 0 40px;color:var(--muted);font-size:13px}
+    .sl-footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px}
+    .sl-footer-links{display:flex;flex-wrap:wrap;gap:20px}
+    .sl-footer-links a:hover{color:var(--text)}
 
-    .sl-float{position:fixed;right:20px;bottom:24px;z-index:60;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#229ed9;color:#fff!important;font-size:22px;box-shadow:0 6px 20px rgba(34,158,217,.4);transition:transform .15s}
-    .sl-float:hover{transform:scale(1.06)}
+    .sl-float{position:fixed;right:20px;bottom:22px;z-index:60;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#229ed9;color:#fff!important;font-size:20px;box-shadow:0 8px 24px rgba(34,158,217,.38)}
 
     @media (max-width:960px){
       .sl-nav nav{display:none}
-      .sl-hero .wrap{grid-template-columns:1fr;min-height:0;max-height:none;padding-top:56px;padding-bottom:24px;text-align:center}
-      .sl-hero-desc{margin-left:auto;margin-right:auto;text-align:left}
-      .sl-scores,.sl-hero-cta{justify-content:center}
-      .sl-hero-art{justify-self:center;max-width:380px}
+      .sl-hero-grid,.sl-plans-grid{grid-template-columns:1fr}
       .sl-clients{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .sl-grid2{gap:20px}
     }
-    @media (max-width:720px){
-      :where(#sl-landing) .wrap{padding-left:16px;padding-right:16px}
-      :where(#sl-landing) section{padding:64px 0}
-      .sl-nav .wrap{gap:12px}
-      .sl-nav .sl-nav-end{gap:10px}
-      .sl-nav .sl-nav-end .sl-btn{padding:0 14px}
-      .sl-hero .wrap{padding-top:40px}
-      .sl-hero h1{font-size:30px}
-      .sl-hero-desc{font-size:14px}
-      .sl-hero-art{max-width:260px}
-      .sl-grid2,.sl-nodes,.sl-duo,.sl-clients{grid-template-columns:1fr}
-      /* 套餐表在手机上转成卡片 */
-      .sl-table{background:transparent;border:0;overflow:visible}
-      .sl-table thead{display:none}
-      .sl-table table,.sl-table tbody,.sl-table tr,.sl-table td{display:block;width:100%}
-      .sl-table tbody{display:grid;gap:12px}
-      .sl-table tr{border:1px solid var(--line);border-radius:10px;background:rgba(30,34,47,.95);padding:6px 0}
-      .sl-table td{display:flex;justify-content:space-between;gap:16px;padding:8px 18px;border:0;text-align:right}
-      .sl-table td:before{content:attr(data-label);color:var(--muted);text-align:left}
-      .sl-table td:first-child{display:block;text-align:left;padding-top:12px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:4px}
-      .sl-table td:first-child:before,.sl-table td:last-child:before{content:none}
-      .sl-table .sl-plan-note{max-width:none}
-      .sl-table td:last-child{padding-top:10px;padding-bottom:12px}
-      .sl-table td:last-child .sl-btn{width:100%;height:38px}
-      .sl-table .sl-state{display:block}
-      .sl-final{padding:96px 0!important}
-      .sl-footer .wrap{grid-template-columns:1fr 1fr}
-      .sl-footer .wrap>div:first-child{grid-column:1/-1}
-      .sl-copy .wrap{flex-direction:column;gap:6px}
+    @media (max-width:680px){
+      :where(#sl-landing) section{padding:44px 0}
+      .sl-grid2,.sl-clients{grid-template-columns:1fr}
+      .sl-stat-widgets{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+      .sl-widget{padding:11px 10px}
+      .sl-widget-val{font-size:20px}
     }
-    @media (prefers-reduced-motion:reduce){.sl-pulse,.sl-dash{animation:none}.sl-client,.sl-btn{transition:none}.sl-client:hover{transform:none}}
   </style>
-  @include('theme::Xboard.console')
 </head>
 
 <body class="sl-landing-page">
   <div id="sl-landing">
     <header class="sl-nav">
       <div class="wrap">
-        <a class="sl-brand" href="/"><i aria-hidden="true">✦</i>星屿StarLink</a>
+        <a class="sl-brand" href="/"><i aria-hidden="true">✦</i><span>{{$title}}</span></a>
         <nav aria-label="页面导航">
-          <a href="#plans">套餐</a>
+          <a href="#plans">订阅套餐</a>
           <a href="#features">服务说明</a>
           <a href="#clients">客户端</a>
           <a href="#invite">邀请返佣</a>
         </nav>
         <div class="sl-nav-end">
-          <a href="/#/login">登录</a>
+          <button type="button" id="sl-landing-theme" class="sl-btn sl-btn-gray sl-btn-sm" aria-label="切换深浅模式">☀️</button>
+          <a class="sl-btn sl-btn-tinted sl-btn-sm" href="/#/login">登录</a>
           <a class="sl-btn sl-btn-primary sl-btn-sm" href="/#/register">注册</a>
         </div>
       </div>
     </header>
 
     <div class="sl-hero">
-      <div class="wrap">
+      <div class="wrap sl-hero-grid">
         <div>
-          <span class="sl-pill">住宅 IP · 机房 IP | 9 个地区 | AI 可用</span>
-          <h1><b>星屿StarLink</b><br />连接世界，探索更多可能</h1>
-          <p class="sl-hero-desc"><i aria-hidden="true">#</i><span>月付含日本、美国原生住宅 IP，另送 6 个机房 IP 节点 + 2 个优化节点；机房 IP 覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度。日常用 AI 没问题，早晚高峰可能会卡顿；需要三网优化线路，可提工单定制（另外收费）。</span></p>
-          <div class="sl-scores">
-            <span><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>日本节点<b>100 分</b></span>
-            <span><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#b22234"/><path d="M0 3h30M0 6h30M0 9h30M0 12h30M0 15h30M0 18h30" stroke="#fff" stroke-width="1.5"/><rect width="13" height="10.5" fill="#3c3b6e"/></svg>美国节点<b>97 分</b></span>
-            <span>2026-11-19 实测</span>
-          </div>
+          <span class="sl-pill">住宅 IP · 机房 IP | 9 个地区 | AI 日常可用</span>
+          <h1>星屿 StarLink<br /><span>像使用原生应用一样从容。</span></h1>
+          <p class="sl-hero-desc">月付含日本、美国原生住宅 IP，另送 6 个机房 IP 节点 + 2 个优化节点；机房 IP 覆盖日本、新加坡、香港、台湾、美国、加拿大、德国、英国、印度。日常使用 ChatGPT、Claude 稳定，早晚高峰可能会卡顿；需要三网优化线路可提工单定制（另收费）。</p>
           <div class="sl-hero-cta">
-            <a class="sl-btn sl-btn-primary sl-btn-lg" href="#plans">立即购买</a>
-            <a class="sl-btn sl-btn-ghost sl-btn-lg" href="/#/register">注册领 1 元体验包</a>
+            <a class="sl-btn sl-btn-primary sl-btn-lg" href="#plans">立即选购套餐</a>
+            <a class="sl-btn sl-btn-tinted sl-btn-lg" href="/#/register">注册领 1 元体验包</a>
+          </div>
+          <div class="sl-stat-widgets">
+            <div class="sl-widget">
+              <div class="sl-widget-label"><span>🇯🇵 日本住宅</span></div>
+              <div class="sl-widget-val">100<small>分</small></div>
+            </div>
+            <div class="sl-widget">
+              <div class="sl-widget-label"><span>🇺🇸 美国住宅</span></div>
+              <div class="sl-widget-val">97<small>分</small></div>
+            </div>
+            <div class="sl-widget">
+              <div class="sl-widget-label"><span>机房覆盖</span></div>
+              <div class="sl-widget-val">32<small>节点</small></div>
+            </div>
           </div>
         </div>
-        <div class="sl-hero-art" aria-hidden="true">
-          <svg viewBox="0 0 520 520" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <radialGradient id="sl-g-sphere" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(210 200) rotate(50) scale(260)"><stop stop-color="#2b3a66"/><stop offset=".6" stop-color="#1c2340"/><stop offset="1" stop-color="#161a2b"/></radialGradient>
-              <linearGradient id="sl-g-rim" x1="80" y1="80" x2="440" y2="440" gradientUnits="userSpaceOnUse"><stop stop-color="#4080ff" stop-opacity=".9"/><stop offset=".5" stop-color="#7b61ff" stop-opacity=".25"/><stop offset="1" stop-color="#a848ff" stop-opacity=".7"/></linearGradient>
-              <linearGradient id="sl-g-arc" x1="150" y1="0" x2="390" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#4080ff"/><stop offset="1" stop-color="#b15cff"/></linearGradient>
-              <clipPath id="sl-clip"><circle cx="260" cy="260" r="180"/></clipPath>
-            </defs>
-            <ellipse cx="260" cy="260" rx="250" ry="84" transform="rotate(-18 260 260)" stroke="url(#sl-g-rim)" stroke-opacity=".35"/>
-            <circle cx="260" cy="260" r="180" fill="url(#sl-g-sphere)"/>
-            <g clip-path="url(#sl-clip)" stroke="#6f8fff" stroke-opacity=".16">
-              <ellipse cx="260" cy="260" rx="180" ry="60"/><ellipse cx="260" cy="260" rx="180" ry="120"/>
-              <path d="M80 260h360M260 80v360"/>
-              <ellipse cx="260" cy="260" rx="60" ry="180"/><ellipse cx="260" cy="260" rx="120" ry="180"/>
-            </g>
-            <circle cx="260" cy="260" r="180" stroke="url(#sl-g-rim)" stroke-width="1.5"/>
-            <path class="sl-dash" d="M170 300 C 210 150, 330 140, 372 220" stroke="url(#sl-g-arc)" stroke-width="2" stroke-linecap="round"/>
-            <circle class="sl-pulse" cx="372" cy="220" r="6" fill="#4080ff"/>
-            <circle cx="372" cy="220" r="5" fill="#fff"/><circle cx="372" cy="220" r="9" stroke="#4080ff" stroke-width="2"/>
-            <circle class="sl-pulse d2" cx="170" cy="300" r="6" fill="#b15cff"/>
-            <circle cx="170" cy="300" r="5" fill="#fff"/><circle cx="170" cy="300" r="9" stroke="#b15cff" stroke-width="2"/>
-            <g font-family="system-ui,sans-serif" font-size="13" fill="#c9d2ea">
-              <rect x="384" y="186" width="58" height="24" rx="6" fill="#232837" stroke="#ffffff22"/><text x="397" y="203">日本</text>
-              <rect x="96" y="312" width="58" height="24" rx="6" fill="#232837" stroke="#ffffff22"/><text x="109" y="329">美国</text>
-            </g>
-            <circle cx="96" cy="140" r="2" fill="#4080ff"/><circle cx="448" cy="380" r="2.5" fill="#a848ff"/><circle cx="420" cy="110" r="1.5" fill="#fff" fill-opacity=".6"/><circle cx="130" cy="430" r="1.5" fill="#fff" fill-opacity=".5"/>
-          </svg>
+
+        <div class="sl-stack" aria-hidden="true">
+          <div class="sl-wallet">
+            <div class="sl-wallet-top"><span>星屿 StarLink · 订阅通行证</span><span>2026-11-19 实测</span></div>
+            <div class="sl-wallet-title">日常相伴 · 住宅月付</div>
+            <div class="sl-wallet-sub">含 JP / US 原生住宅 IP + 8 个附赠节点</div>
+            <div class="sl-wallet-bar"><i></i></div>
+            <div class="sl-wallet-foot"><span>已用 48.2 GB</span><span>总计 200 GB</span></div>
+          </div>
+          <div class="sl-group">
+            <div class="sl-row">
+              <div class="sl-ico" style="background:#34c759">⚡</div>
+              <div class="sl-row-main"><b>一键导入 Shadowrocket / Clash</b><span>扫码或复制订阅链接，10 秒完成配置</span></div>
+              <span class="sl-row-tag">全平台</span>
+            </div>
+            <div class="sl-row">
+              <div class="sl-ico" style="background:#5856d6">✦</div>
+              <div class="sl-row-main"><b>ChatGPT / Claude 原生解锁</b><span>住宅 IP 环境纯净，日常开发与 AI 稳定</span></div>
+              <span class="sl-row-tag">可用</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -256,23 +226,18 @@
     <section id="plans">
       <div class="wrap">
         <div class="sl-head">
-          <h2>热门订阅计划</h2>
-          <p>价格与流量以站内为准，下单前请先看下方服务说明</p>
-        </div>
-        <div class="sl-regions"><span><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>日本</span><span><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#b22234"/><path d="M0 3h30M0 6h30M0 9h30M0 12h30M0 15h30M0 18h30" stroke="#fff" stroke-width="1.5"/><rect width="13" height="10.5" fill="#3c3b6e"/></svg>美国</span><span>新加坡</span><span>香港</span><span>台湾</span><span>德国</span><span>加拿大</span><span>英国</span><span>印度</span></div>
-        <div class="sl-glow">
-          <div class="sl-table">
-            <table>
-              <thead><tr><th>套餐</th><th>流量</th><th>网络速度</th><th>设备数量</th><th>价格</th><th><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">操作</span></th></tr></thead>
-              <tbody id="sl-plans-body" aria-live="polite" aria-busy="true">
-                <tr><td class="sl-state" colspan="6">正在获取可用套餐…</td></tr>
-              </tbody>
-            </table>
+          <div>
+            <h2>热门订阅计划</h2>
+            <p>价格与流量以站内实时配置为准，下单前请先查看下方服务说明</p>
+          </div>
+          <div class="sl-seg" id="sl-plan-seg">
+            <button type="button" data-filter="all" class="is-active">全部</button>
+            <button type="button" data-filter="monthly">月付</button>
+            <button type="button" data-filter="onetime">一次性</button>
           </div>
         </div>
-        <div class="sl-after-table">
-          <h3>立即注册，选购更多订阅计划</h3>
-          <a class="sl-btn sl-btn-primary sl-btn-lg" href="/#/register">开始选购</a>
+        <div id="sl-plans-body" class="sl-plans-grid" aria-live="polite" aria-busy="true">
+          <div class="sl-state-box">正在获取可用套餐…</div>
         </div>
       </div>
     </section>
@@ -280,127 +245,90 @@
     <section id="features">
       <div class="wrap">
         <div class="sl-head">
-          <h2>先说清楚，再决定</h2>
-          <p>我们把线路情况讲在前面，按需选择适合自己的订阅</p>
+          <div>
+            <h2>先说清楚，再决定</h2>
+            <p>不夸大高峰表现，把线路覆盖与适用场景讲在前面</p>
+          </div>
         </div>
         <div class="sl-grid2">
-          <div class="sl-feature">
-            <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></div>
-            <h3>住宅 IP 节点</h3>
-            <p>住宅 IP 节点覆盖日本与美国；月付另送 6 个机房 IP 节点（日本、新加坡、香港、台湾、美国、德国）+ 2 个 Kamatera 优化节点，机房 IP 另有 32 个节点可选。早晚高峰可能会卡顿，我们不夸大线路质量。</p>
+          <div class="sl-card">
+            <h3>住宅 IP + 机房 IP 混合覆盖</h3>
+            <p>日本（100 分）与美国（97 分）原生住宅 IP，月付另附赠 6 个机房节点与 2 个 Kamatera 优化节点；机房节点共有 32 个可选。</p>
+            <div class="sl-regions">
+              <span>🇯🇵 日本</span><span>🇺🇸 美国</span><span>🇸🇬 新加坡</span><span>🇭🇰 香港</span><span>🇹🇼 台湾</span><span>🇩🇪 德国</span><span>🇨🇦 加拿大</span><span>🇬🇧 英国</span><span>🇮🇳 印度</span>
+            </div>
           </div>
-          <div class="sl-feature">
-            <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/></svg></div>
-            <h3>日常用 AI 没问题</h3>
-            <p>ChatGPT、Claude 等 AI 工具日常使用稳定。</p>
-          </div>
-          <div class="sl-feature">
-            <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg></div>
-            <h3>可定制三网优化线路</h3>
-            <p>需要更稳定的线路，可提工单或联系客服，定制三网优化线路住宅 IP 节点（另外收费）。</p>
-          </div>
-          <div class="sl-feature">
-            <div class="sl-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
-            <h3>套餐规则透明</h3>
-            <p>设备数、流量重置方式及有效期，以各套餐详情和下单页面为准，下单前都能看到。</p>
+          <div class="sl-card">
+            <h3>日常 AI 稳定 · 支持定制优化</h3>
+            <p>ChatGPT、Claude 等常用 AI 工具日常使用无忧；早晚高峰普通线路可能会有波动。如对延迟稳定性有更高要求，可提工单定制三网优化线路（另收费）。</p>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section id="nodes">
-      <div class="wrap">
-        <div class="sl-head">
-          <h2>节点覆盖</h2>
-          <p>住宅 IP 评分为实测结果，分数会随时间变化；机房 IP 覆盖 9 个地区</p>
-        </div>
-        <div class="sl-nodes">
-          <div class="sl-node">
-            <div class="sl-node-top"><em><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg></em>日本节点</div>
-            <div class="sl-node-score"><b>100</b>分</div>
-            <div class="sl-bar"><i style="width:100%"></i></div>
-            <p>普通线路住宅 IP</p>
-          </div>
-          <div class="sl-node us">
-            <div class="sl-node-top"><em><svg class="sl-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#b22234"/><path d="M0 3h30M0 6h30M0 9h30M0 12h30M0 15h30M0 18h30" stroke="#fff" stroke-width="1.5"/><rect width="13" height="10.5" fill="#3c3b6e"/></svg></em>美国节点</div>
-            <div class="sl-node-score"><b>97</b>分</div>
-            <div class="sl-bar"><i style="width:97%"></i></div>
-            <p>普通线路住宅 IP</p>
-          </div>
-        </div>
-        <div class="sl-nodes-mojie">机房 IP：32 个节点，覆盖日本 · 新加坡 · 香港 · 台湾 · 美国 · 加拿大 · 德国 · 英国 · 印度 — 流量套餐可选，月付另送其中 6 个</div>
-        <p class="sl-nodes-note">评分于 2026-11-19 实测</p>
       </div>
     </section>
 
     <section id="clients">
       <div class="wrap">
         <div class="sl-head">
-          <h2>客户端下载</h2>
-          <p>注册登录后，在仪表盘复制订阅链接，导入下面任一客户端即可使用</p>
+          <div>
+            <h2>全平台客户端</h2>
+            <p>注册登录后，在 iOS 风格控制台一键导入或导出 Clash 配置文件</p>
+          </div>
         </div>
         <div class="sl-clients">
-          <a class="sl-client" href="https://github.com/clash-verge-rev/clash-verge-rev/releases" target="_blank" rel="noopener"><h3>Clash Verge</h3><p>Windows / macOS，推荐桌面端使用</p><span>去下载 →</span></a>
-          <a class="sl-client" href="https://apps.apple.com/us/app/shadowrocket/id932747118" target="_blank" rel="noopener"><h3>Shadowrocket</h3><p>iOS（App Store 付费应用），推荐苹果手机使用</p><span>去 App Store →</span></a>
-          <a class="sl-client" href="https://github.com/chen08209/FlClash/releases" target="_blank" rel="noopener"><h3>FlClash</h3><p>Android / Windows / macOS，全平台通用</p><span>去下载 →</span></a>
-          <a class="sl-client" href="https://github.com/2dust/v2rayNG/releases" target="_blank" rel="noopener"><h3>v2rayNG</h3><p>Android，轻量稳定</p><span>去下载 →</span></a>
+          <a class="sl-client" href="https://apps.apple.com/us/app/shadowrocket/id932747118" target="_blank" rel="noopener">
+            <div class="sl-client-app" style="background:linear-gradient(135deg,#007aff,#5856d6)">🚀</div>
+            <div><h3>Shadowrocket</h3><p>iOS / iPadOS · App Store</p></div>
+          </a>
+          <a class="sl-client" href="https://github.com/clash-verge-rev/clash-verge-rev/releases" target="_blank" rel="noopener">
+            <div class="sl-client-app" style="background:linear-gradient(135deg,#34c759,#0099b8)">💻</div>
+            <div><h3>Clash Verge</h3><p>Windows / macOS 桌面端</p></div>
+          </a>
+          <a class="sl-client" href="https://github.com/chen08209/FlClash/releases" target="_blank" rel="noopener">
+            <div class="sl-client-app" style="background:linear-gradient(135deg,#ff9500,#ff3b30)">📱</div>
+            <div><h3>FlClash</h3><p>Android / 桌面全平台</p></div>
+          </a>
+          <a class="sl-client" href="https://github.com/2dust/v2rayNG/releases" target="_blank" rel="noopener">
+            <div class="sl-client-app" style="background:linear-gradient(135deg,#af52de,#5856d6)">⚡</div>
+            <div><h3>v2rayNG</h3><p>Android 轻量稳定</p></div>
+          </a>
         </div>
       </div>
     </section>
 
     <section id="invite">
       <div class="wrap">
-        <div class="sl-duo">
-          <div class="sl-feature">
+        <div class="sl-grid2">
+          <div class="sl-card">
             <h3>邀请好友，得 10% 返佣</h3>
-            <p>注册后在「我的邀请」里生成专属邀请链接，好友通过链接注册并购买，你得订单金额 10% 返佣，满 ¥10 可提现（支付宝）。每人最多 5 个邀请码。</p>
-            <a class="sl-btn sl-btn-primary" href="/#/register">注册后邀请好友</a>
+            <p>注册后在「我的邀请」生成专属邀请链接，好友下单即得 10% 返佣，满 ¥10 支持支付宝提现或直接划转余额使用。</p>
+            <div style="margin-top:16px"><a class="sl-btn sl-btn-primary sl-btn-sm" href="/#/register">注册后邀请好友</a></div>
           </div>
-          <div class="sl-feature">
-            <h3>Telegram 频道</h3>
-            <p>节点状态、优惠活动、套餐更新都在频道里发。遇到问题也可以在频道里找到客服入口。</p>
-            <a class="sl-btn sl-btn-ghost" href="https://t.me/starlinkshop888" target="_blank" rel="noopener">加入 t.me/starlinkshop888</a>
+          <div class="sl-card">
+            <h3>Telegram 频道与客服</h3>
+            <p>节点状态播报、线路更新与活动通知都会在频道第一时间发布，也可随时在站内提交工单联系客服。</p>
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <a class="sl-btn sl-btn-tinted sl-btn-sm" href="https://t.me/starlinkshop888" target="_blank" rel="noopener">加入 t.me/starlinkshop888</a>
+              <a class="sl-btn sl-btn-gray sl-btn-sm" href="/#/ticket">提交工单</a>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-
-    <section class="sl-final sl-glow">
-      <div class="wrap">
-        <h2>为日常连接而来的住宅 IP 服务</h2>
-        <a class="sl-btn sl-btn-primary sl-btn-lg" href="/#/login">进入控制台</a>
       </div>
     </section>
 
     <footer class="sl-footer">
       <div class="wrap">
-        <div>
-          <a class="sl-brand" href="/"><i aria-hidden="true">✦</i>星屿StarLink</a>
-          <p>住宅 IP + 机房 IP 节点 · 覆盖 9 个地区</p>
+        <span>© 2026 {{$title}} · 住宅 IP &amp; 机房 IP 服务</span>
+        <div class="sl-footer-links">
+          <a href="#plans">订阅套餐</a>
+          <a href="#clients">客户端下载</a>
+          <a href="https://blog.sp1128.top/tos/" target="_blank" rel="noopener">服务条款</a>
+          <a href="/#/login">进入控制台</a>
         </div>
-        <div>
-          <h4>资源</h4>
-          <ul>
-            <li><a href="#plans">立即购买</a></li>
-            <li><a href="#clients">客户端下载</a></li>
-            <li><a href="https://blog.sp1128.top/tos/" target="_blank" rel="noopener">服务条款</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>联系我们</h4>
-          <ul>
-            <li><a class="sl-chip" href="https://t.me/starlinkshop888" target="_blank" rel="noopener">Telegram：starlinkshop888</a></li>
-            <li><a href="/#/ticket">提交工单</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="sl-copy">
-        <div class="wrap"><span>Copyright © 2026 星屿StarLink. All rights reserved.</span><span>住宅 IP · 机房 IP 服务</span></div>
       </div>
     </footer>
 
     <a class="sl-float" href="https://t.me/starlinkshop888" target="_blank" rel="noopener" title="Telegram 频道 / 客服" aria-label="Telegram 频道 / 客服">✈</a>
-  </div><!-- /#sl-landing -->
+  </div>
 
   <script>
     window.routerBase = "/";
@@ -411,13 +339,35 @@
       version: @json($version),
       background_url: @json($theme_config['background_url'] ?? ''),
       description: @json($description),
-      i18n: ['zh-CN','en-US','ja-JP','vi-VN','ko-KR','zh-TW','fa-IR'],
+      i18n: ['zh-CN', 'en-US', 'ja-JP', 'vi-VN', 'ko-KR', 'zh-TW', 'fa-IR'],
       logo: @json($logo)
     };
   </script>
   <script>
   (function(){
     var TOKEN_KEY = 'VUE_NAIVE_ACCESS_TOKEN';
+    var THEME_KEY = 'SL_IOS_THEME';
+    function applyLandingTheme(){
+      try{
+        var saved = localStorage.getItem(THEME_KEY) || 'auto';
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var dark = saved === 'dark' || (saved === 'auto' && prefersDark);
+        document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.setAttribute('data-sl-theme', dark ? 'dark' : 'light');
+        var btn = document.getElementById('sl-landing-theme');
+        if(btn) btn.textContent = dark ? '🌙' : '☀️';
+      }catch(e){}
+    }
+    applyLandingTheme();
+    var themeBtn = document.getElementById('sl-landing-theme');
+    if(themeBtn){
+      themeBtn.addEventListener('click', function(){
+        var dark = document.documentElement.classList.contains('dark');
+        try{ localStorage.setItem(THEME_KEY, dark ? 'light' : 'dark'); }catch(e){}
+        applyLandingTheme();
+      });
+    }
+
     function getToken(){
       try{
         var raw = localStorage.getItem(TOKEN_KEY);
@@ -428,22 +378,30 @@
         return v;
       }catch(e){ return null; }
     }
-    /* ---- 已登录用户 / 走 #/login 等 SPA 路由时，直接在页内启动原 SPA ---- */
+
     var spaBooted = false;
     function bootSPA(){
-      if(spaBooted) return; spaBooted = true;
-      if(getToken()) { try{ document.cookie = 'sl_logged_in=1;path=/;max-age=2592000'; }catch(e){} }
+      if(spaBooted) return;
+      spaBooted = true;
+      if(getToken()){ try{ document.cookie = 'sl_logged_in=1;path=/;max-age=2592000'; }catch(e){} }
       var landing = document.getElementById('sl-landing');
       if(landing) landing.style.display = 'none';
       document.body.classList.remove('sl-landing-page');
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/theme/{{$theme}}/assets/ios-app.css';
+      document.head.appendChild(link);
       var app = document.createElement('div');
       app.id = 'app';
-      /* 紧跟在首页容器后面：从首页点进来时 custom_html 已经渲染，追加到 body 末尾会把它顶到 SPA 上方 */
       if(landing) landing.parentNode.insertBefore(app, landing.nextSibling);
       else document.body.appendChild(app);
+      var qr = document.createElement('script');
+      qr.async = false;
+      qr.src = '/theme/{{$theme}}/assets/ios-qr.js';
+      document.body.appendChild(qr);
       var s = document.createElement('script');
-      s.type = 'module'; s.setAttribute('crossorigin','');
-      s.src = '/theme/{{$theme}}/assets/umi.js';
+      s.async = false;
+      s.src = '/theme/{{$theme}}/assets/ios-app.js';
       document.body.appendChild(s);
     }
     function needsSPA(){ return !!getToken() || /^#\//.test(location.hash || ''); }
@@ -452,9 +410,12 @@
       bootSPA();
       return;
     }
-    /* ---- 套餐表：公开 guest API，只展示后端真实字段 ---- */
+
     var body = document.getElementById('sl-plans-body');
     var PERIODS = [['month_price','月'],['quarter_price','季'],['half_year_price','半年'],['year_price','年'],['two_year_price','两年'],['three_year_price','三年'],['onetime_price','一次性']];
+    var allPlans = [];
+    var activeFilter = 'all';
+
     function esc(s){
       return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -462,39 +423,60 @@
       var y = Number(cents) / 100;
       return Number.isInteger(y) ? String(y) : y.toFixed(2);
     }
-    function state(text){ body.innerHTML = '<tr><td class="sl-state" colspan="6">' + text + '</td></tr>'; }
-    function row(p){
+    function stateBox(text){
+      body.innerHTML = '<div class="sl-state-box">' + esc(text) + '</div>';
+    }
+    function cardHtml(p, idx){
       var period = PERIODS.filter(function(pair){ var v = p[pair[0]]; return v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0; })[0];
-      var price = '<span>' + (period ? '¥' + money(p[period[0]]) + '<small> / ' + period[1] + '</small>' : '<small>暂无价格</small>') + '</span>';
-      // 套餐说明按纯文本处理：后端 HTML 不能在这里变成可执行标记。
+      var price = period ? '¥' + money(p[period[0]]) + '<small>/ ' + period[1] + '</small>' : '<small>暂无价格</small>';
       var doc = new DOMParser().parseFromString(String(p.content || ''), 'text/html').body;
       doc.querySelectorAll('script,style,iframe,object').forEach(function(el){ el.remove(); });
       var note = (doc.textContent || '').replace(/\s+/g, ' ').trim();
       var traffic = p.transfer_enable == null ? '以套餐为准' : esc(p.transfer_enable) + ' GB';
-      // 后端约定：null 表示不限；缺字段时不做推断。
       var speed = p.speed_limit === null ? '不限速' : Number(p.speed_limit) > 0 ? esc(p.speed_limit) + ' Mbps' : '以套餐为准';
       var devices = p.device_limit === null ? '不限设备数量' : Number(p.device_limit) > 0 ? esc(p.device_limit) + ' 台' : '以套餐为准';
       var href = /^\d+$/.test(String(p.id)) ? '/#/plan/' + p.id : '/#/plan';
-      return '<tr class="sl-plan-row">'
-        + '<td data-label="套餐"><div class="sl-plan-name">' + esc(p.name || '订阅套餐') + '</div>' + (note ? '<div class="sl-plan-note">' + esc(note) + '</div>' : '') + '</td>'
-        + '<td data-label="流量">' + traffic + '</td>'
-        + '<td data-label="网络速度" class="sl-strong">' + speed + '</td>'
-        + '<td data-label="设备数量" class="sl-strong">' + devices + '</td>'
-        + '<td data-label="价格" class="sl-price">' + price + '</td>'
-        + '<td><a class="sl-btn sl-btn-ghost sl-btn-sm" href="' + href + '">立即购买</a></td>'
-        + '</tr>';
+      var hot = idx === 1;
+      return '<article class="sl-plan-row sl-plan-card' + (hot ? ' is-hot' : '') + '">'
+        + '<div class="sl-plan-head"><div class="sl-plan-name">' + esc(p.name || '订阅套餐') + '</div><span class="sl-badge">' + (hot ? '推荐' : '可用') + '</span></div>'
+        + '<div class="sl-plan-price">' + price + '</div>'
+        + '<div class="sl-plan-note">' + (note ? esc(note) : '适合日常连接与 AI 使用') + '</div>'
+        + '<div class="sl-plan-specs">'
+          + '<div><span>可用流量</span><b>' + traffic + '</b></div>'
+          + '<div><span>网络速度</span><b>' + speed + '</b></div>'
+          + '<div><span>设备数量</span><b>' + devices + '</b></div>'
+        + '</div>'
+        + '<a class="sl-btn ' + (hot ? 'sl-btn-primary' : 'sl-btn-tinted') + '" style="width:100%" href="' + href + '">立即购买</a>'
+        + '</article>';
     }
+    function renderPlans(){
+      var list = allPlans.filter(function(p){
+        if(activeFilter === 'monthly') return p.month_price != null;
+        if(activeFilter === 'onetime') return p.onetime_price != null;
+        return true;
+      });
+      if(!list.length){ stateBox('暂无在售套餐，请稍后再来或联系客服。'); return; }
+      body.innerHTML = list.map(cardHtml).join('');
+    }
+    document.querySelectorAll('#sl-plan-seg button').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('#sl-plan-seg button').forEach(function(b){ b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        activeFilter = btn.getAttribute('data-filter') || 'all';
+        renderPlans();
+      });
+    });
+
     fetch('/api/v1/guest/plan/fetch')
       .then(function(r){ if(!r.ok) throw new Error('Plan request failed'); return r.json(); })
       .then(function(j){
-        var plans = (j && Array.isArray(j.data)) ? j.data : [];
+        allPlans = (j && Array.isArray(j.data)) ? j.data : [];
         body.setAttribute('aria-busy', 'false');
-        if(!plans.length){ state('暂无在售套餐，请稍后再来或联系客服。'); return; }
-        body.innerHTML = plans.map(row).join('');
+        renderPlans();
       })
       .catch(function(){
         body.setAttribute('aria-busy', 'false');
-        state('套餐加载失败，请刷新页面，或联系客服。');
+        stateBox('套餐加载失败，请刷新页面，或联系客服。');
       });
   })();
   </script>
