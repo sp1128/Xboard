@@ -202,6 +202,12 @@ test('iOS QR generator outputs valid inline SVG without external dependencies', 
   const svg = window.SLQR.toSvg('https://example.test/s/preview-token', 180);
   assert.match(svg, /^<svg[^>]+width="180"/);
   assert.match(svg, /<path d="M/);
+
+  // Version 7+ (145 chars -> 45x45 + 8 quiet zone = viewBox 53) must keep (6,22) and (22,6) alignment centers
+  const v7 = window.SLQR.toSvg('https://qr.alipay.com/' + 'a'.repeat(120), 200);
+  assert.match(v7, /viewBox="0 0 53 53"/);
+  assert.match(v7, /M26,10h1v1h-1z/, 'alignment center (6,22) shifted by pad=4 must be dark');
+  assert.match(v7, /M10,26h1v1h-1z/, 'alignment center (22,6) shifted by pad=4 must be dark');
   window.close();
 });
 

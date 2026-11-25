@@ -61,7 +61,11 @@
     [9, 232, 30, 2, 116, 0, 0, [6, 26, 46]],
     [10, 274, 18, 2, 68, 2, 69, [6, 28, 50]],
     [11, 324, 20, 4, 81, 0, 0, [6, 30, 54]],
-    [12, 370, 24, 2, 92, 2, 93, [6, 32, 58]]
+    [12, 370, 24, 2, 92, 2, 93, [6, 32, 58]],
+    [13, 428, 26, 4, 107, 0, 0, [6, 34, 62]],
+    [14, 461, 30, 3, 115, 1, 116, [6, 26, 46, 66]],
+    [15, 523, 22, 5, 87, 1, 88, [6, 26, 48, 70]],
+    [16, 589, 24, 5, 98, 1, 99, [6, 26, 50, 74]]
   ];
 
   function utf8Bytes(str) {
@@ -167,12 +171,6 @@
     finder(0, size - 7);
     finder(size - 7, 0);
 
-    for (var t = 8; t < size - 8; t++) {
-      setFixed(6, t, t % 2 === 0);
-      setFixed(t, 6, t % 2 === 0);
-    }
-    setFixed(size - 8, 8, 1);
-
     for (var ai = 0; ai < align.length; ai++) {
       for (var aj = 0; aj < align.length; aj++) {
         var ar = align[ai], ac = align[aj];
@@ -184,6 +182,12 @@
         }
       }
     }
+
+    for (var t = 8; t < size - 8; t++) {
+      if (!fixed[6][t]) setFixed(6, t, t % 2 === 0);
+      if (!fixed[t][6]) setFixed(t, 6, t % 2 === 0);
+    }
+    setFixed(size - 8, 8, 1);
 
     // Reserve format info (15 bits) + version info if >=7
     for (var f = 0; f < 9; f++) {
@@ -265,11 +269,16 @@
 
     function penalty(m) {
       var score = 0;
+      var dark = 0;
       for (var r = 0; r < size; r++) {
         var run = 1;
-        for (var c = 1; c < size; c++) {
-          if (m[r][c] === m[r][c - 1]) { run++; if (run === 5) score += 3; else if (run > 5) score++; }
-          else run = 1;
+        for (var c = 0; c < size; c++) {
+          if (m[r][c]) dark++;
+          if (c > 0) {
+            if (m[r][c] === m[r][c - 1]) { run++; if (run === 5) score += 3; else if (run > 5) score++; }
+            else run = 1;
+            if (r > 0 && m[r][c] === m[r - 1][c] && m[r][c] === m[r][c - 1] && m[r][c] === m[r - 1][c - 1]) score += 3;
+          }
         }
       }
       for (var c2 = 0; c2 < size; c2++) {
@@ -279,6 +288,8 @@
           else run2 = 1;
         }
       }
+      var pct = Math.abs((dark * 100) / (size * size) - 50);
+      score += Math.floor(pct / 5) * 10;
       return score;
     }
 
@@ -296,7 +307,7 @@
     var mat = buildMatrix(text);
     if (!mat) return '<div style="padding:16px;font-size:12px;color:#888">内容过长，请直接复制链接</div>';
     var n = mat.length;
-    var pad = 2;
+    var pad = 4;
     var total = n + pad * 2;
     var path = '';
     for (var r = 0; r < n; r++) {
