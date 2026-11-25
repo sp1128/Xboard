@@ -39,6 +39,11 @@ class MailTemplate extends Model
             'required_vars' => ['link'],
             'optional_vars' => ['name', 'url'],
         ],
+        'welcomeFirstOrder' => [
+            'label' => '首次订阅欢迎',
+            'required_vars' => ['plan_name'],
+            'optional_vars' => ['name', 'url', 'transfer'],
+        ],
     ];
 
     /**

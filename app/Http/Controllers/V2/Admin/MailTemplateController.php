@@ -129,6 +129,7 @@ class MailTemplateController extends Controller
             'remindExpire' => "{$appName} - 到期提醒测试",
             'remindTraffic' => "{$appName} - 流量提醒测试",
             'mailLogin' => "{$appName} - 登录链接测试",
+            'welcomeFirstOrder' => "{$appName} - 订阅成功欢迎测试",
             default => "{$appName} - 邮件测试",
         };
     }
@@ -162,6 +163,12 @@ class MailTemplateController extends Controller
                 'link' => $appUrl . '/login?token=test-token',
                 'url' => $appUrl,
             ],
+            'welcomeFirstOrder' => [
+                'name' => $appName,
+                'url' => $appUrl,
+                'plan_name' => '月付50G',
+                'transfer' => '50G',
+            ],
             default => ['name' => $appName, 'url' => $appUrl],
         };
     }
@@ -175,6 +182,7 @@ class MailTemplateController extends Controller
             'remindExpire' => "{$appName} - 服务即将到期",
             'remindTraffic' => "{$appName} - 流量使用提醒",
             'mailLogin' => "{$appName} - 邮件登录",
+            'welcomeFirstOrder' => "{$appName} - 订阅成功，欢迎使用",
             default => "{$appName}",
         };
     }
