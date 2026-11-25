@@ -103,6 +103,11 @@ class Plugin extends AbstractPlugin implements PaymentInterface
 
         $sign = $params['sign'];
         unset($params['sign'], $params['sign_type']);
+        // EPay V1 spec: sign, sign_type and empty values do not participate
+        // in the signature. Some gateways send an empty `param=` field; if we
+        // include it here but the gateway excluded it when signing, the
+        // verification fails and the payment never auto-activates.
+        $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
         ksort($params);
         $str = stripslashes(urldecode(http_build_query($params))) . $secret;
 
