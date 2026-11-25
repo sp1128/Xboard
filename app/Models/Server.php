@@ -455,6 +455,11 @@ class Server extends Model
 
     /**
      * 最后检查时间访问器
+     * 优先读 Cache；Cache 为空时回落到 DB 的 last_check_at 列。
+     * 只靠 Cache 时，一次 cache:clear / Redis 重启会把全部节点的
+     * last_check_at 一起清掉，所有节点同时变红，客户看到全离线；
+     * DB 列由 touchNode 每次心跳同步写，清空缓存也不丢，状态不断档。
+     * 若本次查询没选 last_check_at 列（窄 select），直接查一次 DB。
      */
     protected function lastCheckAt(): Attribute
     {
@@ -462,7 +467,15 @@ class Server extends Model
             get: function () {
                 $type = strtoupper($this->type);
                 $serverId = $this->parent_id ?: $this->id;
-                return Cache::get(CacheKey::get("SERVER_{$type}_LAST_CHECK_AT", $serverId));
+                $cached = Cache::get(CacheKey::get("SERVER_{$type}_LAST_CHECK_AT", $serverId));
+                if ($cached !== null) {
+                    return $cached;
+                }
+                $raw = $this->getRawOriginal('last_check_at');
+                if ($raw !== null) {
+                    return $raw;
+                }
+                return $this->newQuery()->where('id', $this->id)->value('last_check_at');
             }
         );
     }

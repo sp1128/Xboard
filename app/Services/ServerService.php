@@ -202,14 +202,20 @@ class ServerService
 
     /**
      * 标记节点心跳
+     * 同时写 Cache 和 DB 的 last_check_at 列。只写 Cache 时，一次
+     * cache:clear / Redis 重启会把全部节点的心跳一起清掉，所有节点
+     * 同时变红；DB 列是持久兜底，Server 模型的 lastCheckAt 访问器
+     * 在 Cache 为空时会回落到它，状态不断档。
      */
     public static function touchNode(Server $node): void
     {
+        $now = time();
         Cache::put(
             CacheKey::get('SERVER_' . strtoupper($node->type) . '_LAST_CHECK_AT', $node->id),
-            time(),
+            $now,
             3600
         );
+        $node->newQuery()->where('id', $node->id)->update(['last_check_at' => $now]);
     }
 
     /**
