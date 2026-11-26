@@ -13,6 +13,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class OrderResource extends JsonResource
 {
     /**
+     * Whether to fold handling_amount into total_amount for display.
+     * True (default): the order list only renders total_amount, so it must
+     * already include the fee. False: the order-detail page adds the fee
+     * itself (iOS app computes fee from total_amount), so it needs the raw
+     * base price — folding here would double-count the fee on that page
+     * (e.g. 18.88 showed as 19.82 in the list but 20.81 on detail).
+     */
+    public bool $foldHandling = true;
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
@@ -30,7 +40,7 @@ class OrderResource extends JsonResource
         // total_amount for display. This resource is only used by the
         // user-facing order endpoints; admin views and backend logic read
         // the model directly and are unaffected.
-        if (!empty($this->handling_amount)) {
+        if ($this->foldHandling && !empty($this->handling_amount)) {
             $data['total_amount'] = (int) $this->total_amount + (int) $this->handling_amount;
         }
         return [

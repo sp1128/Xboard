@@ -55,7 +55,12 @@ class OrderController extends Controller
         if ($order->surplus_order_ids) {
             $order['surplus_orders'] = Order::whereIn('id', $order->surplus_order_ids)->get();
         }
-        return $this->success(OrderResource::make($order));
+        // Detail page adds the handling fee itself (frontend computes fee
+        // from total_amount), so return the raw base price here. The list
+        // keeps the folded total because it only renders total_amount.
+        $resource = OrderResource::make($order);
+        $resource->foldHandling = false;
+        return $this->success($resource);
     }
 
     public function save(OrderSave $request)
