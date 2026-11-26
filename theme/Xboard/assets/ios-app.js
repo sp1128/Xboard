@@ -649,7 +649,27 @@
     return baseUrl + (baseUrl.indexOf('?') === -1 ? '?flag=meta' : '&flag=meta');
   }
 
+  function planState() {
+    var s = state.sub || {};
+    if (!s.plan_id || !s.plan) return 'none';
+    if (s.expired_at && Number(s.expired_at) * 1000 <= Date.now()) return 'expired';
+    return 'ok';
+  }
+  function needPlan() {
+    if (planState() === 'expired') toast('订阅已到期，请先续费', true);
+    else toast('请先订阅套餐', true);
+    navigate('plan');
+  }
+
   function exportClashConfig() {
+    if (planState() !== 'ok') {
+      if (!state.sub) {
+        api('user/getSubscribe').then(function (r) { state.sub = r.data; exportClashConfig(); }).catch(function (e) { toast(e.message, true); });
+        return;
+      }
+      needPlan();
+      return;
+    }
     var subUrl = state.sub && state.sub.subscribe_url;
     if (!subUrl) {
       api('user/getSubscribe').then(function (r) {
@@ -679,6 +699,14 @@
   }
 
   function openSubscribeSheet() {
+    if (planState() !== 'ok') {
+      if (!state.sub) {
+        api('user/getSubscribe').then(function (r) { state.sub = r.data; openSubscribeSheet(); }).catch(function (e) { toast(e.message, true); });
+        return;
+      }
+      needPlan();
+      return;
+    }
     var url = (state.sub && state.sub.subscribe_url) || '';
     if (!url) { toast('当前暂无有效订阅链接', true); return; }
     var enc = encodeURIComponent(url);
@@ -1527,16 +1555,22 @@
           '<div>' +
             '<div class="ios-section-title">快捷操作</div>' +
             '<div class="ios-group">' +
-              '<div class="ios-row ios-row-clickable" data-action="open-sub-sheet">' +
-                '<div class="ios-badge-icon" style="background:var(--ios-accent)">📲</div>' +
-                '<div style="flex:1"><div style="font-size:14px;font-weight:600">一键导入 / 二维码订阅</div><div class="sl-muted" style="font-size:12px">Shadowrocket / Clash / Surge / Loon</div></div>' +
-                '<span class="sl-faint">›</span>' +
-              '</div>' +
-              '<div class="ios-row ios-row-clickable" data-action="export-yaml">' +
-                '<div class="ios-badge-icon" style="background:var(--ios-teal)">↓</div>' +
-                '<div style="flex:1"><div style="font-size:14px;font-weight:600">导出配置文件 (StarLink.yaml)</div><div class="sl-muted" style="font-size:12px">Clash Meta 标准 YAML 直接下载</div></div>' +
-                '<span class="sl-faint">›</span>' +
-              '</div>' +
+              (planState() === 'ok'
+                ? '<div class="ios-row ios-row-clickable" data-action="open-sub-sheet">' +
+                  '<div class="ios-badge-icon" style="background:var(--ios-accent)">📲</div>' +
+                  '<div style="flex:1"><div style="font-size:14px;font-weight:600">一键导入 / 二维码订阅</div><div class="sl-muted" style="font-size:12px">Shadowrocket / Clash / Surge / Loon</div></div>' +
+                  '<span class="sl-faint">›</span>' +
+                '</div>' +
+                '<div class="ios-row ios-row-clickable" data-action="export-yaml">' +
+                  '<div class="ios-badge-icon" style="background:var(--ios-teal)">↓</div>' +
+                  '<div style="flex:1"><div style="font-size:14px;font-weight:600">导出配置文件 (StarLink.yaml)</div><div class="sl-muted" style="font-size:12px">Clash Meta 标准 YAML 直接下载</div></div>' +
+                  '<span class="sl-faint">›</span>' +
+                '</div>'
+                : '<div class="ios-row ios-row-clickable" data-nav="plan">' +
+                  '<div class="ios-badge-icon" style="background:var(--ios-accent)">🛒</div>' +
+                  '<div style="flex:1"><div style="font-size:14px;font-weight:600">选购套餐，开始使用</div><div class="sl-muted" style="font-size:12px">订阅后可一键导入与导出配置</div></div>' +
+                  '<span class="sl-faint">›</span>' +
+                '</div>') +
               '<div class="ios-row ios-row-clickable" data-nav="knowledge">' +
                 '<div class="ios-badge-icon" style="background:var(--ios-green)">📖</div>' +
                 '<div style="flex:1"><div style="font-size:14px;font-weight:600">客户端配置教程</div><div class="sl-muted" style="font-size:12px">手把手图文使用指南</div></div>' +

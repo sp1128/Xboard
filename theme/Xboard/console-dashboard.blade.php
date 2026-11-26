@@ -41,6 +41,7 @@
 (function () {
   var TOKEN_KEY = 'VUE_NAIVE_ACCESS_TOKEN';
   var SUB_TITLES = ['我的订阅', '我的訂閱', 'My Subscription', 'My subscription'];
+  var QUICK_TITLES = ['一键订阅', 'Quick Subscription'];
   var APPS = [
     ['Windows', 'Clash Verge', 'https://github.com/clash-verge-rev/clash-verge-rev/releases', 'desktop'],
     ['macOS', 'Clash Verge', 'https://github.com/clash-verge-rev/clash-verge-rev/releases', 'desktop'],
@@ -176,13 +177,16 @@
     root.appendChild(appsCard());
     return root;
   }
-  function originalSubCard(container) {
+  function cardByTitles(container, titles) {
     var cards = container.querySelectorAll('.n-card');
     for (var i = 0; i < cards.length; i++) {
       var head = cards[i].querySelector('.n-card-header__main');
-      if (head && SUB_TITLES.indexOf(head.textContent.trim()) !== -1) return cards[i];
+      if (head && titles.indexOf(head.textContent.trim()) !== -1) return cards[i];
     }
     return null;
+  }
+  function originalSubCard(container) {
+    return cardByTitles(container, SUB_TITLES);
   }
 
   // 每次进入仪表盘读取一次数据；SPA 重绘时用缓存同步插入，不重复请求。
@@ -196,6 +200,11 @@
     if (data) {
       anchor.parentNode.insertBefore(build(data[0], data[1]), anchor);
       anchor.classList.add('sl-dash-replaced');
+      // 无套餐时「一键订阅」卡里的导入/导出操作都会失败，一并隐藏，只留「暂无订阅，去购买」
+      if (!data[0].plan_id || !data[0].plan) {
+        var quick = cardByTitles(container, QUICK_TITLES);
+        if (quick) quick.classList.add('sl-dash-replaced');
+      }
       return;
     }
     if (loading) return;

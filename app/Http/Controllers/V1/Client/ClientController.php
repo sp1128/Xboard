@@ -45,7 +45,7 @@ class ClientController extends Controller
 
         if (!$userService->isAvailable($user)) {
             HookManager::call('client.subscribe.unavailable');
-            return response('', 403, ['Content-Type' => 'text/plain']);
+            return response('订阅不可用，请先购买或续费套餐', 403, ['Content-Type' => 'text/plain; charset=utf-8']);
         }
 
         return $this->doSubscribe($request, $user);
