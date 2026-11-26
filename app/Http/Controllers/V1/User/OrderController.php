@@ -154,6 +154,7 @@ class OrderController extends Controller
         $result = $paymentService->pay([
             'trade_no' => $tradeNo,
             'total_amount' => isset($order->handling_amount) ? ($order->total_amount + $order->handling_amount) : $order->total_amount,
+            'handling_amount' => $order->handling_amount ?? 0,
             'user_id' => $order->user_id,
             'stripe_token' => $request->input('token')
         ]);
