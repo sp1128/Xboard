@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SendEmailJob;
 use App\Models\CommissionLog;
 use Illuminate\Console\Command;
 use App\Models\Order;
@@ -119,6 +120,24 @@ class CheckCommission extends Command
                 'order_amount' => $order->total_amount,
                 'get_amount' => $commissionBalance
             ]);
+            // 佣金到账邮件提醒
+            try {
+                $invitedUser = User::find($order->user_id);
+                SendEmailJob::dispatch([
+                    'email' => $inviter->email,
+                    'subject' => admin_setting('app_name', 'XBoard') . ' - 您获得了一笔邀请佣金',
+                    'template_name' => 'commissionEarned',
+                    'template_value' => [
+                        'name' => admin_setting('app_name', 'XBoard'),
+                        'amount' => number_format($commissionBalance / 100, 2),
+                        'invited_email' => $invitedUser ? $invitedUser->email : '',
+                        'order_amount' => number_format($order->total_amount / 100, 2),
+                        'total_balance' => number_format($inviter->commission_balance / 100, 2),
+                    ],
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('commission email failed: ' . $e->getMessage());
+            }
             $inviteUserId = $inviter->invite_user_id;
             // update order actual commission balance
             $order->actual_commission_balance = $order->actual_commission_balance + $commissionBalance;
